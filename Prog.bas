@@ -371,9 +371,7 @@ Function calcStudentScore(ByRef st As Student)
                 If st.nlpValid = 1 Then calcNlpScore st
         End If
 
-        If st.totalValid = 1 Then
-                calcTotalScore st
-        End If
+        If st.totalValid = 1 Then calcTotalScore st
 End Function
 
 Function createStudentReportHeader(ByVal col As Long)
@@ -1148,10 +1146,8 @@ Function calcTotalScore(ByRef st As Student)
         ElseIf idx < 4 Then
                 st.totalScore = st.bmiScore * 15 + st.fhlScore * 15 + st.m50Score * 20 + st.zwtScore * 20 + st.tsScore * 20 + st.ywqzScore * 10
         ElseIf idx < 6 Then
-                st.totalValid = 1
                 st.totalScore = st.bmiScore * 15 + st.fhlScore * 15 + st.m50Score * 20 + st.zwtScore * 10 + st.tsScore * 10 + st.ywqzScore * 20 + st.nlpScore * 10
         Else
-                st.totalValid = 1
                 st.totalScore = st.bmiScore * 15 + st.fhlScore * 15 + st.m50Score * 20 + st.zwtScore * 10 + st.tyScore * 10 + st.ywqzScore * 10 + st.nlpScore * 20
         End If
 
