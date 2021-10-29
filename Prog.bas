@@ -341,6 +341,10 @@ Function readStudent(ByRef st As Student, ByVal row As Long)
         st.nlp0 = timeToSeconds(st.nlp0Str)
         st.nlp1 = st.nlp0
         If st.nlp0 >= 0 Then st.nlpValid = validateInput(st.nlp0, st.nlp0Str)
+
+        If st.bmiValid = 1 Or st.fhlValid = 1 Or st.m50Valid = 1 Or st.tsValid = 1 Or st.ywqzValid = 1 Or st.nlpValid = 1 Then
+                st.totalValid = 1
+        End If
 End Function
 
 Function calcStudentScore(ByRef st As Student)
@@ -367,7 +371,9 @@ Function calcStudentScore(ByRef st As Student)
                 If st.nlpValid = 1 Then calcNlpScore st
         End If
 
-        calcTotalScore st
+        If st.totalValid = 1 Then
+                calcTotalScore st
+        End If
 End Function
 
 Function createStudentReportHeader(ByVal col As Long)
@@ -1138,33 +1144,15 @@ Function calcTotalScore(ByRef st As Student)
         ' Debug.Print st.bmiScore, st.fhlScore, st.m50Score, st.zwtScore; st.tsScore, st.tyScore, st.nlpScore, st.nlpJfScore, st.ywqzScore, st.ywqzJfScore
 
         If idx < 2 Then
-                If st.bmiValid = 1 Or st.fhlValid = 1 Or st.m50Valid = 1 Or st.zwtValid = 1 Or st.tsValid = 1 Then
-                        st.totalValid = 1
-                        st.totalScore = st.bmiScore * 15 + st.fhlScore * 15 + st.m50Score * 20 + st.zwtScore * 30 + st.tsScore * 20
-                Else
-                        Exit Function
-                End If
+                st.totalScore = st.bmiScore * 15 + st.fhlScore * 15 + st.m50Score * 20 + st.zwtScore * 30 + st.tsScore * 20
         ElseIf idx < 4 Then
-                If st.bmiValid = 1 Or st.fhlValid = 1 Or st.m50Valid = 1 Or st.zwtValid = 1 Or st.tsValid = 1 Or st.ywqzValid = 1 Then
-                        st.totalValid = 1
-                        st.totalScore = st.bmiScore * 15 + st.fhlScore * 15 + st.m50Score * 20 + st.zwtScore * 20 + st.tsScore * 20 + st.ywqzScore * 10
-                Else
-                        Exit Function
-                End If
+                st.totalScore = st.bmiScore * 15 + st.fhlScore * 15 + st.m50Score * 20 + st.zwtScore * 20 + st.tsScore * 20 + st.ywqzScore * 10
         ElseIf idx < 6 Then
-                If st.bmiValid = 1 Or st.fhlValid = 1 Or st.m50Valid = 1 Or st.zwtValid = 1 Or st.tsValid = 1 Or st.ywqzValid = 1 Or st.nlpValid = 1 Then
-                        st.totalValid = 1
-                        st.totalScore = st.bmiScore * 15 + st.fhlScore * 15 + st.m50Score * 20 + st.zwtScore * 10 + st.tsScore * 10 + st.ywqzScore * 20 + st.nlpScore * 10
-                Else
-                        Exit Function
-                End If
+                st.totalValid = 1
+                st.totalScore = st.bmiScore * 15 + st.fhlScore * 15 + st.m50Score * 20 + st.zwtScore * 10 + st.tsScore * 10 + st.ywqzScore * 20 + st.nlpScore * 10
         Else
-                If st.bmiValid = 1 Or st.fhlValid = 1 Or st.m50Valid = 1 Or st.zwtValid = 1 Or st.tsValid = 1 Or st.ywqzValid = 1 Or st.nlpValid = 1 Then
-                        st.totalValid = 1
-                        st.totalScore = st.bmiScore * 15 + st.fhlScore * 15 + st.m50Score * 20 + st.zwtScore * 10 + st.tyScore * 10 + st.ywqzScore * 10 + st.nlpScore * 20
-                Else
-                        Exit Function
-                End If
+                st.totalValid = 1
+                st.totalScore = st.bmiScore * 15 + st.fhlScore * 15 + st.m50Score * 20 + st.zwtScore * 10 + st.tyScore * 10 + st.ywqzScore * 10 + st.nlpScore * 20
         End If
 
         ' ¸½¼Ó·Ö
