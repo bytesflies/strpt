@@ -20,14 +20,14 @@ Type Student
 
         gender As Long
         grade As Long
-        ' 10±¶
+        ' 10å€
         height As Long
-        ' 1000000±¶
+        ' 1000000å€
         weight As Long
 
         bmiValid As Long
         bmiScore As Long
-        ' 10±¶
+        ' 10å€
         bmi As Long
         bmiLow As Long
 
@@ -41,7 +41,7 @@ Type Student
         m50Score As Long
 
         zwtValid As Long
-        ' 10±¶
+        ' 10å€
         zwt As Long
         zwtScore As Long
 
@@ -62,19 +62,19 @@ Type Student
         ywqzJfScore As Long
 
         nlpValid As Long
-        ' Ãë
+        ' ç§’
         nlp0 As Long
         nlp1 As Long
         nlpScore As Long
         nlpJfScore As Long
 
         totalValid As Long
-        ' 100±¶
+        ' 100å€
         totalScore As Long
-        ' 100±¶
+        ' 100å€
         totalJfScore As Long
 
-        ' ´æ´¢±¨±íÊı¾İ
+        ' å­˜å‚¨æŠ¥è¡¨æ•°æ®
         arr() As Variant
 End Type
 
@@ -124,12 +124,12 @@ Sub start()
         initStringTable
 
         t0 = timeGetTime()
-        Debug.Print "[" & t0 & "]: "; "´´½¨±íÍ· ..."
+        Debug.Print "[" & t0 & "]: "; "åˆ›å»ºè¡¨å¤´ ..."
 
         createStudentReportHeader ActiveCell.Column()
         'Exit Sub
 
-        Debug.Print "[" & timeGetTime() & "]: "; "¿ªÊ¼Éú³É ..."
+        Debug.Print "[" & timeGetTime() & "]: "; "å¼€å§‹ç”Ÿæˆ ..."
 
         Application.ScreenUpdating = False
         Do While True
@@ -157,14 +157,14 @@ Sub start()
 rowComplete:
                 If row Mod 200 = 0 Then
                         't1 = timeGetTime()
-                        'Debug.Print "[" & t1 & "]: "; "ÒÑ¾­Éú³Éµ½" & row & "ĞĞ, ºÄÊ± " & t1 - t0 & " ms ..."
+                        'Debug.Print "[" & t1 & "]: "; "å·²ç»ç”Ÿæˆåˆ°" & row & "è¡Œ, è€—æ—¶ " & t1 - t0 & " ms ..."
                 End If
                 row = row + 1
                 offset = offset + 1
         Loop
         t1 = timeGetTime()
-        Debug.Print "[" & t1 & "]: "; "ÒÑ¾­Éú³Éµ½" & row & "ĞĞ, ºÄÊ± " & t1 - t0 & " ms ..."
-        Debug.Print "[" & timeGetTime() & "]: "; "Éú³É½áÊø ..."
+        Debug.Print "[" & t1 & "]: "; "å·²ç»ç”Ÿæˆåˆ°" & row & "è¡Œ, è€—æ—¶ " & t1 - t0 & " ms ..."
+        Debug.Print "[" & timeGetTime() & "]: "; "ç”Ÿæˆç»“æŸ ..."
         Debug.Print ""
         Application.ScreenUpdating = True
 End Sub
@@ -345,25 +345,25 @@ Function readStudent(ByRef st As Student, ByVal row As Long)
 End Function
 
 Function calcStudentScore(ByRef st As Student)
-        ' ¹²ĞÔÖ¸±ê
+        ' å…±æ€§æŒ‡æ ‡
         If st.bmiValid = 1 Then calcBMIScore st
         If st.fhlValid = 1 Then calcFhlScore st
         If st.m50Valid = 1 Then calcM50Score st
         If st.zwtValid = 1 Then calcZwtScore st
 
-        ' ÌøÉş»òÕßÌøÔ¶
+        ' è·³ç»³æˆ–è€…è·³è¿œ
         If st.grade < 6 Then
                 If st.tsValid = 1 Then calcTsScore st
         Else
                 If st.tyValid = 1 Then calcTyScore st
         End If
 
-        ' ÒıÌåÏòÉÏ»òÕßÑöÎÔÆğ×ø
+        ' å¼•ä½“å‘ä¸Šæˆ–è€…ä»°å§èµ·å
         If st.grade > 1 Then
                 If st.ywqzValid = 1 Then calcYwqzScore st
         End If
 
-        ' ÄÍÁ¦ÅÜ: 50x8»òÕß1000Ã×»òÕß800Ã×
+        ' è€åŠ›è·‘: 50x8æˆ–è€…1000ç±³æˆ–è€…800ç±³
         If st.grade > 3 Then
                 If st.nlpValid = 1 Then calcNlpScore st
         End If
@@ -386,39 +386,39 @@ Function createStudentReport(ByRef st As Student, ByVal row As Long)
         Dim i As Long
 
         With st
-        ' ĞÕÃû
+        ' å§“å
         .arr(col) = st.nameStr
         col = col + 1
         ' ID
         .arr(col) = st.idStr
         col = col + 1
-        ' Ñ§Ğ£
+        ' å­¦æ ¡
         .arr(col) = st.schoolStr
         col = col + 1
-        ' Äê¼¶
+        ' å¹´çº§
         .arr(col) = getGradeName(st.grade)
         col = col + 1
-        ' °à¼¶
+        ' ç­çº§
         .arr(col) = st.classStr
         col = col + 1
-        ' ĞÔ±ğ
+        ' æ€§åˆ«
         If st.gender = 1 Then
-                .arr(col) = "ÄĞ"
+                .arr(col) = "ç”·"
         Else
-                .arr(col) = "Å®"
+                .arr(col) = "å¥³"
         End If
         col = col + 1
 
         If st.totalValid = 1 Then
-                ' ×ÛºÏ³É¼¨
+                ' ç»¼åˆæˆç»©
                 .arr(col + 0) = Round(Int((st.totalScore + st.totalJfScore + 5) / 10) / 10, 1)
-                ' ×ÛºÏÆÀ¶¨
+                ' ç»¼åˆè¯„å®š
                 .arr(col + 1) = getTotalLevel(st.totalScore + st.totalJfScore)
-                ' ²âÊÔ³É¼¨
+                ' æµ‹è¯•æˆç»©
                 .arr(col + 2) = Round(Int((st.totalScore + 5) / 10) / 10, 1)
-                ' ²âÊÔÆÀ¶¨
+                ' æµ‹è¯•è¯„å®š
                 .arr(col + 3) = getTotalLevel(st.totalScore)
-                ' ¸½¼Ó·Ö
+                ' é™„åŠ åˆ†
                 .arr(col + 4) = st.totalJfScore / 100
         Else
                 .arr(col + 0) = "X"
@@ -429,18 +429,18 @@ Function createStudentReport(ByRef st As Student, ByVal row As Long)
         End If
         col = col + 5
 
-        ' Éí¸ß³É¼¨
+        ' èº«é«˜æˆç»©
         .arr(col) = st.heightStr
         col = col + 1
-        ' ÌåÖØ³É¼¨
+        ' ä½“é‡æˆç»©
         .arr(col) = st.weightStr
         col = col + 1
         If st.bmiValid Then
-                ' Éí¸ßÌåÖØÖ¸Êı
+                ' èº«é«˜ä½“é‡æŒ‡æ•°
                 .arr(col + 0) = st.bmi / 10
-                ' Éí¸ßÌåÖØ³É¼¨
+                ' èº«é«˜ä½“é‡æˆç»©
                 .arr(col + 1) = st.bmiScore
-                ' Éí¸ßÌåÖØµÈ¼¶
+                ' èº«é«˜ä½“é‡ç­‰çº§
                 .arr(col + 2) = getBmiLevel(st.bmiScore, st.bmiLow)
         Else
                 .arr(col + 0) = "X"
@@ -449,13 +449,13 @@ Function createStudentReport(ByRef st As Student, ByVal row As Long)
         End If
         col = col + 3
 
-        ' ·Î»îÁ¿³É¼¨
+        ' è‚ºæ´»é‡æˆç»©
         .arr(col) = st.fhlStr
         col = col + 1
         If st.fhlValid = 1 Then
-                ' ·Î»îÁ¿µÃ·Ö
+                ' è‚ºæ´»é‡å¾—åˆ†
                 .arr(col + 0) = st.fhlScore
-                ' ·Î»îÁ¿µÈ¼¶
+                ' è‚ºæ´»é‡ç­‰çº§
                 .arr(col + 1) = getFhlLevel(st.fhlScore)
         Else
                 .arr(col + 0) = "X"
@@ -463,13 +463,13 @@ Function createStudentReport(ByRef st As Student, ByVal row As Long)
         End If
         col = col + 2
 
-        ' 50Ã×ÅÜ³É¼¨
+        ' 50ç±³è·‘æˆç»©
         .arr(col) = st.m50Str
         col = col + 1
         If st.m50Valid = 1 Then
-                ' 50Ã×ÅÜµÃ·Ö
+                ' 50ç±³è·‘å¾—åˆ†
                 .arr(col + 0) = st.m50Score
-                ' 50Ã×ÅÜµÈ¼¶
+                ' 50ç±³è·‘ç­‰çº§
                 .arr(col + 1) = getM50Level(st.m50Score)
         Else
                 .arr(col + 0) = "X"
@@ -477,13 +477,13 @@ Function createStudentReport(ByRef st As Student, ByVal row As Long)
         End If
         col = col + 2
 
-        ' ×øÎ»ÌåÇ°Çü³É¼¨
+        ' åä½ä½“å‰å±ˆæˆç»©
         .arr(col) = st.zwtStr
         col = col + 1
         If st.zwtValid = 1 Then
-                ' ×øÎ»ÌåÇ°ÇüµÃ·Ö
+                ' åä½ä½“å‰å±ˆå¾—åˆ†
                 .arr(col + 0) = st.zwtScore
-                ' ×øÎ»ÌåÇ°ÇüµÈ¼¶
+                ' åä½ä½“å‰å±ˆç­‰çº§
                 .arr(col + 1) = getZwtLevel(st.zwtScore)
         Else
                 .arr(col + 0) = "X"
@@ -492,163 +492,163 @@ Function createStudentReport(ByRef st As Student, ByVal row As Long)
         col = col + 2
 
         If st.grade < 6 Then
-                ' Ò»·ÖÖÓÌøÉş³É¼¨
+                ' ä¸€åˆ†é’Ÿè·³ç»³æˆç»©
                 .arr(col + 0) = st.tsStr
                 If st.tsValid = 1 Then
-                        ' Ò»·ÖÖÓÌøÉşµÃ·Ö
+                        ' ä¸€åˆ†é’Ÿè·³ç»³å¾—åˆ†
                         .arr(col + 1) = st.tsScore
-                        ' Ò»·ÖÖÓÌøÉşµÈ¼¶
+                        ' ä¸€åˆ†é’Ÿè·³ç»³ç­‰çº§
                         .arr(col + 2) = getTsLevel(st.tsScore)
                 Else
                         .arr(col + 1) = "X"
                         .arr(col + 2) = "X"
                 End If
         Else
-                ' Ò»·ÖÖÓÌøÉş³É¼¨
+                ' ä¸€åˆ†é’Ÿè·³ç»³æˆç»©
                 .arr(col + 0) = ""
-                ' Ò»·ÖÖÓÌøÉşµÃ·Ö
+                ' ä¸€åˆ†é’Ÿè·³ç»³å¾—åˆ†
                 .arr(col + 1) = ""
-                ' Ò»·ÖÖÓÌøÉşµÈ¼¶
+                ' ä¸€åˆ†é’Ÿè·³ç»³ç­‰çº§
                 .arr(col + 2) = ""
         End If
         col = col + 3
 
         has = 0
         If st.grade >= 2 Then
-                ' Ğ¡Ñ§¶şÄê¼¶ÒÔÉÏ
+                ' å°å­¦äºŒå¹´çº§ä»¥ä¸Š
                 If st.grade < 6 Or st.gender <> 1 Then
                         has = 1
                 End If
         End If
 
         If has = 1 Then
-                ' Ò»·ÖÖÓÑöÎÔÆğ×ø³É¼¨
+                ' ä¸€åˆ†é’Ÿä»°å§èµ·åæˆç»©
                 .arr(col + 0) = st.ywqz0Str
                 If st.ywqzValid = 1 Then
-                        ' Ò»·ÖÖÓÑöÎÔÆğ×øµÃ·Ö
+                        ' ä¸€åˆ†é’Ÿä»°å§èµ·åå¾—åˆ†
                         .arr(col + 1) = st.ywqzScore
-                        ' Ò»·ÖÖÓÑöÎÔÆğ×øµÈ¼¶
+                        ' ä¸€åˆ†é’Ÿä»°å§èµ·åç­‰çº§
                         .arr(col + 2) = getYwqzLevel(st.ywqzScore)
                 Else
                         .arr(col + 1) = "X"
                         .arr(col + 2) = "X"
                 End If
         Else
-                ' Ò»·ÖÖÓÑöÎÔÆğ×ø³É¼¨
+                ' ä¸€åˆ†é’Ÿä»°å§èµ·åæˆç»©
                 .arr(col + 0) = ""
-                ' Ò»·ÖÖÓÑöÎÔÆğ×øµÃ·Ö
+                ' ä¸€åˆ†é’Ÿä»°å§èµ·åå¾—åˆ†
                 .arr(col + 1) = ""
-                ' Ò»·ÖÖÓÑöÎÔÆğ×øµÈ¼¶
+                ' ä¸€åˆ†é’Ÿä»°å§èµ·åç­‰çº§
                 .arr(col + 2) = ""
         End If
         col = col + 3
 
         If st.grade = 4 Or st.grade = 5 Then
-                ' 50Ã×¡Á8Íù·µÅÜ³É¼¨
+                ' 50ç±³Ã—8å¾€è¿”è·‘æˆç»©
                 .arr(col + 0) = st.nlp0Str
                 If st.nlpValid = 1 Then
-                        ' 50Ã×¡Á8Íù·µÅÜµÃ·Ö
+                        ' 50ç±³Ã—8å¾€è¿”è·‘å¾—åˆ†
                         .arr(col + 1) = st.nlpScore
-                        ' 50Ã×¡Á8Íù·µÅÜµÈ¼¶
+                        ' 50ç±³Ã—8å¾€è¿”è·‘ç­‰çº§
                         .arr(col + 2) = getNlpLevel(st.nlpScore)
                 Else
                         .arr(col + 1) = "X"
                         .arr(col + 2) = "X"
                 End If
         Else
-                ' 50Ã×¡Á8Íù·µÅÜ³É¼¨
+                ' 50ç±³Ã—8å¾€è¿”è·‘æˆç»©
                 .arr(col + 0) = ""
-                ' 50Ã×¡Á8Íù·µÅÜµÃ·Ö
+                ' 50ç±³Ã—8å¾€è¿”è·‘å¾—åˆ†
                 .arr(col + 1) = ""
-                ' 50Ã×¡Á8Íù·µÅÜµÈ¼¶
+                ' 50ç±³Ã—8å¾€è¿”è·‘ç­‰çº§
                 .arr(col + 2) = ""
         End If
         col = col + 3
 
         If st.grade >= 6 Then
-                ' Á¢¶¨ÌøÔ¶³É¼¨
+                ' ç«‹å®šè·³è¿œæˆç»©
                 .arr(col + 0) = st.tyStr
                 If st.tyValid = 1 Then
-                        ' Á¢¶¨ÌøÔ¶µÃ·Ö
+                        ' ç«‹å®šè·³è¿œå¾—åˆ†
                         .arr(col + 1) = st.tyScore
-                        ' Á¢¶¨ÌøÔ¶µÈ¼¶
+                        ' ç«‹å®šè·³è¿œç­‰çº§
                         .arr(col + 2) = getTyLevel(st.tyScore)
                 Else
                         .arr(col + 1) = "X"
                         .arr(col + 2) = "X"
                 End If
         Else
-                ' Á¢¶¨ÌøÔ¶³É¼¨
+                ' ç«‹å®šè·³è¿œæˆç»©
                 .arr(col + 0) = ""
-                ' Á¢¶¨ÌøÔ¶µÃ·Ö
+                ' ç«‹å®šè·³è¿œå¾—åˆ†
                 .arr(col + 1) = ""
-                ' Á¢¶¨ÌøÔ¶µÈ¼¶
+                ' ç«‹å®šè·³è¿œç­‰çº§
                 .arr(col + 2) = ""
         End If
         col = col + 3
 
         If st.grade >= 6 And st.gender <> 1 Then
-                ' 800Ã×ÅÜ³É¼¨
+                ' 800ç±³è·‘æˆç»©
                 .arr(col + 0) = st.nlp0Str
                 If st.nlpValid = 1 Then
-                        ' 800Ã×ÅÜµÃ·Ö
+                        ' 800ç±³è·‘å¾—åˆ†
                         .arr(col + 1) = st.nlpScore
-                        ' 800Ã×ÅÜµÈ¼¶
+                        ' 800ç±³è·‘ç­‰çº§
                         .arr(col + 2) = getNlpLevel(st.nlpScore)
                 Else
                         .arr(col + 1) = "X"
                         .arr(col + 2) = "X"
                 End If
         Else
-                ' 800Ã×ÅÜ³É¼¨
+                ' 800ç±³è·‘æˆç»©
                 .arr(col + 0) = ""
-                ' 800Ã×ÅÜµÃ·Ö
+                ' 800ç±³è·‘å¾—åˆ†
                 .arr(col + 1) = ""
-                ' 800Ã×ÅÜµÈ¼¶
+                ' 800ç±³è·‘ç­‰çº§
                 .arr(col + 2) = ""
         End If
         col = col + 3
 
         If st.grade >= 6 And st.gender = 1 Then
-                ' 1000Ã×ÅÜ³É¼¨
+                ' 1000ç±³è·‘æˆç»©
                 .arr(col + 0) = st.nlp0Str
                 If st.nlpValid = 1 Then
-                        ' 1000Ã×ÅÜµÃ·Ö
+                        ' 1000ç±³è·‘å¾—åˆ†
                         .arr(col + 1) = st.nlpScore
-                        ' 1000Ã×ÅÜµÈ¼¶
+                        ' 1000ç±³è·‘ç­‰çº§
                         .arr(col + 2) = getNlpLevel(st.nlpScore)
                 Else
                         .arr(col + 1) = "X"
                         .arr(col + 2) = "X"
                 End If
         Else
-                ' 1000Ã×ÅÜ³É¼¨
+                ' 1000ç±³è·‘æˆç»©
                 .arr(col + 0) = ""
-                ' 1000Ã×ÅÜµÃ·Ö
+                ' 1000ç±³è·‘å¾—åˆ†
                 .arr(col + 1) = ""
-                ' 1000Ã×ÅÜµÈ¼¶
+                ' 1000ç±³è·‘ç­‰çº§
                 .arr(col + 2) = ""
         End If
         col = col + 3
 
         If st.grade >= 6 And st.gender = 1 Then
-                ' ÒıÌåÏòÉÏ³É¼¨
+                ' å¼•ä½“å‘ä¸Šæˆç»©
                 .arr(col + 0) = st.ywqz0Str
                 If st.ywqzValid = 1 Then
-                        ' ÒıÌåÏòÉÏµÃ·Ö
+                        ' å¼•ä½“å‘ä¸Šå¾—åˆ†
                         .arr(col + 1) = st.ywqzScore
-                        ' ÒıÌåÏòÉÏµÈ¼¶
+                        ' å¼•ä½“å‘ä¸Šç­‰çº§
                         .arr(col + 2) = getYwqzLevel(st.ywqzScore)
                 Else
                         .arr(col + 1) = "X"
                         .arr(col + 2) = "X"
                 End If
         Else
-                ' ÒıÌåÏòÉÏ³É¼¨
+                ' å¼•ä½“å‘ä¸Šæˆç»©
                 .arr(col + 0) = ""
-                ' ÒıÌåÏòÉÏµÃ·Ö
+                ' å¼•ä½“å‘ä¸Šå¾—åˆ†
                 .arr(col + 1) = ""
-                ' ÒıÌåÏòÉÏµÈ¼¶
+                ' å¼•ä½“å‘ä¸Šç­‰çº§
                 .arr(col + 2) = ""
         End If
         col = col + 3
@@ -664,45 +664,45 @@ Function getGradeName(ByVal grade As Long)
         If grade >= i And grade <= j Then
                 getGradeName = gradeNameTbl(grade)
         Else
-                getGradeName = "Î´Öª"
+                getGradeName = "æœªçŸ¥"
         End If
 End Function
 
 Function getTotalLevel(ByVal score As Long)
         If score >= 8995 Then
-                getTotalLevel = "ÓÅĞã"
+                getTotalLevel = "ä¼˜ç§€"
         ElseIf score >= 7995 Then
-                getTotalLevel = "Á¼ºÃ"
+                getTotalLevel = "è‰¯å¥½"
         ElseIf score >= 5995 Then
-                getTotalLevel = "¼°¸ñ"
+                getTotalLevel = "åŠæ ¼"
         Else
-                getTotalLevel = "²»¼°¸ñ"
+                getTotalLevel = "ä¸åŠæ ¼"
         End If
 End Function
 
 Function getBmiLevel(ByVal bmi As Long, ByVal low As Long)
         If bmi <= 60 Then
-                getBmiLevel = "·ÊÅÖ"
+                getBmiLevel = "è‚¥èƒ–"
         ElseIf bmi <= 80 Then
                 If low = 1 Then
-                        getBmiLevel = "µÍÌåÖØ"
+                        getBmiLevel = "ä½ä½“é‡"
                 Else
-                        getBmiLevel = "³¬ÖØ"
+                        getBmiLevel = "è¶…é‡"
                 End If
         Else
-                        getBmiLevel = "Õı³£"
+                        getBmiLevel = "æ­£å¸¸"
         End If
 End Function
 
 Function getGeneralLevel(ByVal score As Long)
         If score >= 90 Then
-                getGeneralLevel = "ÓÅĞã"
+                getGeneralLevel = "ä¼˜ç§€"
         ElseIf score >= 80 Then
-                getGeneralLevel = "Á¼ºÃ"
+                getGeneralLevel = "è‰¯å¥½"
         ElseIf score >= 60 Then
-                getGeneralLevel = "¼°¸ñ"
+                getGeneralLevel = "åŠæ ¼"
         Else
-                getGeneralLevel = "²»¼°¸ñ"
+                getGeneralLevel = "ä¸åŠæ ¼"
         End If
 End Function
 
@@ -794,19 +794,19 @@ End Function
 Function calcBMIScore(ByRef st As Student)
         Dim idx As Integer
 
-        ' ¼ÆËãBMI
+        ' è®¡ç®—BMI
         calcBMI st
 
         idx = st.grade
-        ' ´óÑ§¼Æ·Ö¹æÔòÒ»Ñù
+        ' å¤§å­¦è®¡åˆ†è§„åˆ™ä¸€æ ·
         If idx > 12 Then idx = 12
-        ' Å®ÉúµÄ·ÖÊıÔÚºóÃæ
+        ' å¥³ç”Ÿçš„åˆ†æ•°åœ¨åé¢
         If st.gender <> 1 Then idx = idx + 13 * 4
 
         st.bmiLow = 0
         If st.bmi <= BMIData(idx + 13) Then
                 st.bmiScore = 80
-                ' ³¬ÖØ
+                ' è¶…é‡
                 st.bmiLow = 1
         ElseIf st.bmi < BMIData(idx + 26) Then
                 st.bmiScore = 100
@@ -818,18 +818,18 @@ Function calcBMIScore(ByRef st As Student)
 End Function
 
 Function calcFhlScoreImpl(ByRef st As Student, fhlData As Variant)
-        ' Êı¾İÎ»ÖÃ
+        ' æ•°æ®ä½ç½®
         Dim offset As Integer
         Dim col As Integer
         Dim i As Integer
 
         col = st.grade
-        ' ´ó1ºÍ´ó2Ò»Ñù
+        ' å¤§1å’Œå¤§2ä¸€æ ·
         If col = 13 Then col = 12
-        ' ´ó3ºÍ´ó4Ò»Ñù
+        ' å¤§3å’Œå¤§4ä¸€æ ·
         If col > 13 Then col = 13
 
-        ' µÚÒ»ÁĞÊÇ·ÖÊı
+        ' ç¬¬ä¸€åˆ—æ˜¯åˆ†æ•°
         col = col + 1
         offset = col
 
@@ -862,7 +862,7 @@ Function calcM50ScoreImpl(ByRef st As Student, m50Data As Variant)
         If col = 13 Then col = 12
         If col > 13 Then col = 13
 
-        ' µÚÒ»ÁĞÊÇ·ÖÊı
+        ' ç¬¬ä¸€åˆ—æ˜¯åˆ†æ•°
         col = col + 1
         offset = col
 
@@ -1035,7 +1035,7 @@ Function calcYwqzScoreImpl(ByRef st As Student, ywqzData As Variant)
         Next i
 
 found:
-        ' ¼ÆËã¸½¼Ó·Ö
+        ' è®¡ç®—é™„åŠ åˆ†
         st.ywqzJfScore = 0
         If st.ywqzScore = 100 Then
                 Dim tmp As Long
@@ -1148,29 +1148,29 @@ Function calcTotalScore(ByRef st As Student)
                 st.totalScore = st.bmiScore * 15 + st.fhlScore * 15 + st.m50Score * 20 + st.zwtScore * 10 + st.tyScore * 10 + st.ywqzScore * 10 + st.nlpScore * 20
         End If
 
-        ' ¸½¼Ó·Ö
+        ' é™„åŠ åˆ†
         st.totalJfScore = (st.tsJfScore + st.ywqzJfScore + st.nlpJfScore) * 100
 End Function
 
 Function initStringTable()
-        rptHdrTbl = Array("ĞÕÃû", "ID", "Ñ§Ğ£", "Äê¼¶", "°à¼¶", "ĞÔ±ğ", _
-                "×ÛºÏ³É¼¨", "×ÛºÏÆÀ¶¨", "²âÊÔ³É¼¨", "²âÊÔ³É¼¨ÆÀ¶¨", "¸½¼Ó·Ö", _
-                "Éí¸ß³É¼¨", "ÌåÖØ³É¼¨", "Éí¸ßÌåÖØÖ¸Êı", "Éí¸ßÌåÖØ³É¼¨", "Éí¸ßÌåÖØµÈ¼¶", _
-                "·Î»îÁ¿³É¼¨", "·Î»îÁ¿µÃ·Ö", "·Î»îÁ¿µÈ¼¶", _
-                "50Ã×ÅÜ³É¼¨", "50Ã×ÅÜµÃ·Ö", "50Ã×ÅÜµÈ¼¶", _
-                "×øÎ»ÌåÇ°Çü³É¼¨", "×øÎ»ÌåÇ°ÇüµÃ·Ö", "×øÎ»ÌåÇ°ÇüµÈ¼¶", _
-                "Ò»·ÖÖÓÌøÉş³É¼¨", "Ò»·ÖÖÓÌøÉşµÃ·Ö", "Ò»·ÖÖÓÌøÉşµÈ¼¶", _
-                "Ò»·ÖÖÓÑöÎÔÆğ×ø³É¼¨", "Ò»·ÖÖÓÑöÎÔÆğ×øµÃ·Ö", "Ò»·ÖÖÓÑöÎÔÆğ×øµÈ¼¶", _
-                "50Ã×¡Á8Íù·µÅÜ³É¼¨", "50Ã×¡Á8Íù·µÅÜµÃ·Ö", "50Ã×¡Á8Íù·µÅÜµÈ¼¶", _
-                "Á¢¶¨ÌøÔ¶³É¼¨", "Á¢¶¨ÌøÔ¶µÃ·Ö", "Á¢¶¨ÌøÔ¶µÈ¼¶", _
-                "800Ã×ÅÜ³É¼¨", "800Ã×ÅÜµÃ·Ö", "800Ã×ÅÜµÈ¼¶", _
-                "1000Ã×ÅÜ³É¼¨", "1000Ã×ÅÜµÃ·Ö", "1000Ã×ÅÜµÈ¼¶", _
-                "ÒıÌåÏòÉÏ³É¼¨", "ÒıÌåÏòÉÏµÃ·Ö", "ÒıÌåÏòÉÏµÈ¼¶")
+        rptHdrTbl = Array("å§“å", "ID", "å­¦æ ¡", "å¹´çº§", "ç­çº§", "æ€§åˆ«", _
+                "ç»¼åˆæˆç»©", "ç»¼åˆè¯„å®š", "æµ‹è¯•æˆç»©", "æµ‹è¯•æˆç»©è¯„å®š", "é™„åŠ åˆ†", _
+                "èº«é«˜æˆç»©", "ä½“é‡æˆç»©", "èº«é«˜ä½“é‡æŒ‡æ•°", "èº«é«˜ä½“é‡æˆç»©", "èº«é«˜ä½“é‡ç­‰çº§", _
+                "è‚ºæ´»é‡æˆç»©", "è‚ºæ´»é‡å¾—åˆ†", "è‚ºæ´»é‡ç­‰çº§", _
+                "50ç±³è·‘æˆç»©", "50ç±³è·‘å¾—åˆ†", "50ç±³è·‘ç­‰çº§", _
+                "åä½ä½“å‰å±ˆæˆç»©", "åä½ä½“å‰å±ˆå¾—åˆ†", "åä½ä½“å‰å±ˆç­‰çº§", _
+                "ä¸€åˆ†é’Ÿè·³ç»³æˆç»©", "ä¸€åˆ†é’Ÿè·³ç»³å¾—åˆ†", "ä¸€åˆ†é’Ÿè·³ç»³ç­‰çº§", _
+                "ä¸€åˆ†é’Ÿä»°å§èµ·åæˆç»©", "ä¸€åˆ†é’Ÿä»°å§èµ·åå¾—åˆ†", "ä¸€åˆ†é’Ÿä»°å§èµ·åç­‰çº§", _
+                "50ç±³Ã—8å¾€è¿”è·‘æˆç»©", "50ç±³Ã—8å¾€è¿”è·‘å¾—åˆ†", "50ç±³Ã—8å¾€è¿”è·‘ç­‰çº§", _
+                "ç«‹å®šè·³è¿œæˆç»©", "ç«‹å®šè·³è¿œå¾—åˆ†", "ç«‹å®šè·³è¿œç­‰çº§", _
+                "800ç±³è·‘æˆç»©", "800ç±³è·‘å¾—åˆ†", "800ç±³è·‘ç­‰çº§", _
+                "1000ç±³è·‘æˆç»©", "1000ç±³è·‘å¾—åˆ†", "1000ç±³è·‘ç­‰çº§", _
+                "å¼•ä½“å‘ä¸Šæˆç»©", "å¼•ä½“å‘ä¸Šå¾—åˆ†", "å¼•ä½“å‘ä¸Šç­‰çº§")
 
-        gradeNameTbl = Array("Ò»Äê¼¶", "¶şÄê¼¶", "ÈıÄê¼¶", "ËÄÄê¼¶", "ÎåÄê¼¶", "ÁùÄê¼¶", _
-                "³õÒ»", "³õ¶ş", "³õÈı", _
-                "¸ßÒ»", "¸ß¶ş", "¸ßÈı", _
-                "´óÒ»", "´ó¶ş", "´óÈı", "´óËÄ")
+        gradeNameTbl = Array("ä¸€å¹´çº§", "äºŒå¹´çº§", "ä¸‰å¹´çº§", "å››å¹´çº§", "äº”å¹´çº§", "å…­å¹´çº§", _
+                "åˆä¸€", "åˆäºŒ", "åˆä¸‰", _
+                "é«˜ä¸€", "é«˜äºŒ", "é«˜ä¸‰", _
+                "å¤§ä¸€", "å¤§äºŒ", "å¤§ä¸‰", "å¤§å››")
 End Function
 
 Function initScoreTable()
