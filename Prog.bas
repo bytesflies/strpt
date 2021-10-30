@@ -245,11 +245,8 @@ Function timeToSeconds(t As String)
         num = 0
         tmp = Len(t)
         For i = 1 To tmp
-                If IsNumeric(Mid(t, i, 1)) Then
-                        num = num + 1
-                Else
-                        Exit For
-                End If
+                If Not IsNumeric(Mid(t, i, 1)) Then Exit For
+                num = num + 1
         Next i
 
         If num <> 0 Then
@@ -666,9 +663,9 @@ Function getGradeName(ByVal grade As Long)
         j = UBound(gradeNameTbl)
         If grade >= i And grade <= j Then
                 getGradeName = gradeNameTbl(grade)
-                Exit Function
+        Else
+                getGradeName = "δ֪"
         End If
-        getGradeName = "δ֪"
 End Function
 
 Function getTotalLevel(ByVal score As Long)
