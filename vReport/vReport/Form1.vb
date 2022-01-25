@@ -116,8 +116,18 @@ Public Class Form1
 		End If
 	End Sub
 
+	Private Delegate Sub logToUIDelegate(ByRef msg As String)
+	Dim dlgt As New logToUIDelegate(AddressOf logtoUI)
+
+	Sub logtoUI(ByRef msg As String)
+		RichTextBox1.Text = msg & Chr(13) & Chr(10) & RichTextBox1.Text
+	End Sub
+
 	Protected Sub log(ByVal tag As String, ByVal msg As String)
-		If Not logger Is Nothing Then logger.WriteLine(String.Format("[{0}] {1} {2}", Now, tag, msg))
+		Dim m As String
+		m = String.Format("[{0}] {1} {2}", Now, tag, msg)
+		If tag <> "信息" Then RichTextBox1.Invoke(dlgt, m)
+		If Not logger Is Nothing Then logger.WriteLine(m)
 	End Sub
 
 	Protected Sub logFlush()
