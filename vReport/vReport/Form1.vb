@@ -1,4 +1,5 @@
 ﻿Imports System.IO
+Imports System.Threading
 Imports Microsoft.Office.Interop
 
 Public Class Form1
@@ -6,28 +7,28 @@ Public Class Form1
 
 	Dim 测项起始列号 As UInt32 = 21
 
-	Dim 测项名称信息 As String() = { _
-	      "50米跑（单位：秒）", _
-	      "坐位体前屈（单位：厘米）", _
-	      "一分钟跳绳（单位：次）", _
-	      "一分钟仰卧起坐（单位：次）", _
-	      "50米×8往返跑（单位：秒）", _
-	      "立定跳远（单位：厘米）", _
-	      "800米跑（单位：秒）", _
-	      "1000米跑（单位：秒）", _
-	      "引体向上（单位：次）"}
+	Dim 测项名称信息() As String = { _
+   "50米跑（单位：秒）", _
+   "坐位体前屈（单位：厘米）", _
+   "一分钟跳绳（单位：次）", _
+   "一分钟仰卧起坐（单位：次）", _
+   "50米×8往返跑（单位：秒）", _
+   "立定跳远（单位：厘米）", _
+   "800米跑（单位：秒）", _
+   "1000米跑（单位：秒）", _
+   "引体向上（单位：次）"}
 
 	' Excel模板信息
 
-	Dim 工作表名称信息 As String() = { _
-	      "1112", _
-	      "1314", _
-	      "1516女", _
-	      "1516男", _
-	      "212223女", _
-	      "212223男", _
-	      "313233女", _
-	      "313233男"}
+	Dim 工作表名称信息() As String = { _
+   "1112", _
+   "1314", _
+   "1516女", _
+   "1516男", _
+   "212223女", _
+   "212223男", _
+   "313233女", _
+   "313233男"}
 
 	Dim 学生评价等级的建议起始行号 As UInt32 = 2
 
@@ -39,19 +40,19 @@ Public Class Form1
 
 	Dim 学生测试项信息起始行号 As UInt32 = 63
 
-	Dim 整体运动建议信息 As UInt32() = {5, 5, 7, 7, 7, 7, 7, 7}
+	Dim 整体运动建议信息() As UInt32 = {5, 5, 7, 7, 7, 7, 7, 7}
 
 	' 单项指标
 	' 学生身体素质测试结果的建议
-	Dim 学生测试项信息 As UInt32() = { _
-	      3, 0, 1, 2, 0, 0, _
-	      4, 0, 1, 3, 2, 0, _
-	      5, 0, 1, 3, 2, 4, _
-	      5, 0, 1, 3, 2, 4, _
-	      5, 0, 1, 3, 5, 6, _
-	      5, 0, 1, 8, 5, 7, _
-	      5, 0, 1, 3, 5, 6, _
-	      5, 0, 1, 8, 5, 7}
+	Dim 学生测试项信息() As UInt32 = { _
+   3, 0, 1, 2, 0, 0, _
+   4, 0, 1, 3, 2, 0, _
+   5, 0, 1, 3, 2, 4, _
+   5, 0, 1, 3, 2, 4, _
+   5, 0, 1, 3, 5, 6, _
+   5, 0, 1, 8, 5, 7, _
+   5, 0, 1, 3, 5, 6, _
+   5, 0, 1, 8, 5, 7}
 
 	' 当前信息
 
@@ -59,11 +60,19 @@ Public Class Form1
 	Dim 当前类别 As UInt32 = 1
 	Dim 身高体重等级 As UInt32
 
+	Dim 学校名称 As String
+	Dim 年级班级 As String
+	Dim 学生姓名 As String
+
 	Dim 各等级百分比(4) As UInt32
 	Dim 各身体形态百分比(4) As UInt32
 	Dim 各身体机能百分比(4) As UInt32
 
+	Dim 待处理文件列表() As String
+
 	' 资源信息
+
+	Dim wk As Thread
 
 	Dim wordApp As Word.Application
 	Dim excelApp As Excel.Application
@@ -77,10 +86,14 @@ Public Class Form1
 	Dim excelWs As Excel.Worksheet
 
 	' 配置
-	Const displayExcel As Boolean = True
-	Const displayWord As Boolean = True
+	Dim displayExcel As Boolean = False
+	Dim displayWord As Boolean = False
+
+	' 日志
+	Dim logger As StreamWriter
 
 	Private Sub 装载应用()
+		logW("装载应用")
 		If wordApp Is Nothing Then
 			wordApp = New Word.Application
 			If displayWord Then wordApp.Visible = True
@@ -92,6 +105,7 @@ Public Class Form1
 	End Sub
 
 	Private Sub 卸载应用()
+		logW("卸载应用")
 		If Not wordApp Is Nothing Then
 			wordApp.Quit()
 			wordApp = Nothing
@@ -102,12 +116,55 @@ Public Class Form1
 		End If
 	End Sub
 
+	Protected Sub log(ByVal tag As String, ByVal msg As String)
+		If Not logger Is Nothing Then logger.WriteLine(String.Format("[{0}] {1} {2}", Now, tag, msg))
+	End Sub
+
+	Protected Sub logFlush()
+		If Not logger Is Nothing Then logger.Flush()
+	End Sub
+
+	Protected Sub logI(ByVal msg As String)
+		log("信息", msg)
+	End Sub
+
+	Protected Sub logW(ByVal msg As String)
+		log("警告", msg)
+	End Sub
+
+	Protected Sub logE(ByVal msg As String)
+		log("错误", msg)
+		logflush()
+	End Sub
+
+	Protected Sub logF(ByVal msg As String)
+		log("致命", msg)
+	End Sub
+
 	Private Sub Form1_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
+		Dim ts As Date
+		ts = Now
+		logger = New StreamWriter(String.Format("log_{0:04}{1}{2}{3}{4}{5}.txt", ts.Year, ts.Month, ts.Day, ts.Hour, ts.Minute, ts.Second), True)
+		logW("程序启动")
+
 		' 装载应用()
 	End Sub
 
 	Private Sub Form1_FormClosed(ByVal sender As System.Object, ByVal e As System.Windows.Forms.FormClosedEventArgs) Handles MyBase.FormClosed
+		If Not wk Is Nothing Then wk.Join()
+
 		卸载应用()
+
+		logW("程序终止")
+		Try
+			logger.Flush()
+			logger.Close()
+			logger = Nothing
+		Catch ex As Exception
+			MsgBox(ex.Message)
+		Finally
+			logger = Nothing
+		End Try
 	End Sub
 
 	Private Sub 计算类别()
@@ -139,6 +196,9 @@ Public Class Form1
 					当前类别 = 6
 				End If
 		End Select
+		logW("年级: " & 年级)
+		logW("性别: " & 性别)
+		logW("计算类别: " & 当前类别)
 	End Sub
 
 	Private Function 计算等级(ByVal 评价 As String)
@@ -154,6 +214,7 @@ Public Class Form1
 			Case Else
 				计算等级 = 3
 		End Select
+		logI("评价: " & 计算等级)
 	End Function
 
 	Private Function 计算身体形态等级(ByVal 评价 As String)
@@ -169,6 +230,7 @@ Public Class Form1
 			Case Else
 				计算身体形态等级 = 1
 		End Select
+		logI("计算身体形态等级: " & 计算身体形态等级)
 	End Function
 
 	Private Function 计算百分比(ByRef 计数() As UInt32, ByRef 百分比() As UInt32)
@@ -182,15 +244,18 @@ Public Class Form1
 
 		If 计数(0) = 0 Then GoTo out
 
+		logI("计数(0): " & 计数(0))
 		百分比和 = 0
 		For i = 1 To 3
 			百分比(i - 1) = 10000 * (计数(i)) / 计数(0)
 			余数 = 百分比(i - 1) Mod 10
 			百分比(i - 1) = Int(百分比(i - 1) / 10)
+			logI("百分比" & (i - 1) & ": " & 百分比(i - 1))
 			If 余数 >= 5 Then 百分比(i - 1) = 百分比(i - 1) + 1
 			百分比和 = 百分比和 + 百分比(i - 1)
 		Next
 		百分比(3) = 1000 - 百分比和
+		logI("百分比3: " & 百分比(3))
 
 out:
 		计算百分比 = 0
@@ -220,6 +285,13 @@ out:
 			行号 = 行号 + 1
 		Loop
 
+		Dim i As UInt32
+		For i = 0 To 5
+			logI("各等级计数" & i & ": " & 各等级计数(i))
+			logI("各身体形态计数" & i & ": " & 各身体形态计数(i))
+			logI("各身体机能计数" & i & ": " & 各身体机能计数(i))
+		Next
+
 		计算百分比(各等级计数, 各等级百分比)
 		计算百分比(各身体形态计数, 各身体形态百分比)
 		计算百分比(各身体机能计数, 各身体机能百分比)
@@ -228,14 +300,19 @@ out:
 	End Function
 
 	Private Sub 处理数据(ByRef 待处理文件 As String)
+		logI("开始 - 处理数据 " & 待处理文件)
+
 		Try
 			excelWb = excelApp.Workbooks.Add(待处理文件)
 			excelWs = excelWb.Sheets(1)
 		Catch e As Exception
+			logE(e.Message)
+			logE(e.StackTrace)
 			GoTo out
 		End Try
 
 		If excelWs.Range("A" & 1).Text <> "ID" Then
+			logE("不识别的待处理文件:" & 待处理文件)
 			MsgBox("不识别的待处理文件:" & 待处理文件)
 			GoTo out
 		End If
@@ -245,6 +322,8 @@ out:
 
 			当前行号 = 2
 			Do While True
+				logW("当前行号 " & 当前行号)
+
 				If excelWs.Range("B" & 当前行号).Text = "" Then Exit Do
 
 				计算类别()
@@ -257,10 +336,12 @@ out:
 
 				当前行号 = 当前行号 + 1
 
-				If 当前行号 > 1 Then Exit Do
+				' Release版本2分钟处理42笔数据
+				If 当前行号 > 3 Then Exit Do
 			Loop
 		Catch e As Exception
-			MsgBox("处理数据:" & e.Message & "\n" & e.StackTrace)
+			logE("处理数据:" & e.Message)
+			logE(e.StackTrace)
 		End Try
 
 out:
@@ -273,22 +354,16 @@ out:
 			excelWb.Close()
 			excelWb = Nothing
 		End If
+		logI("结束 - 处理数据 " & 待处理文件)
 	End Sub
 
 	Private Sub 处理事件()
-		Dim 对话框 As New System.Windows.Forms.OpenFileDialog
-		Dim 待处理文件列表() As String
+		logI("开始 - 处理事件")
 
-		With 对话框
-			.InitialDirectory = Application.StartupPath
-			.Filter = "Excel files (*.xlsx;*.xls)|*.xlsx;*.xls"
-			.Multiselect = True
-			.ShowDialog()
-			待处理文件列表 = .FileNames
-		End With
-
+		logW("待处理文件列表: " & String.Join(",", 待处理文件列表))
 		If 待处理文件列表 Is Nothing Or 待处理文件列表.Length = 0 Then
-			Exit Sub
+			logW("没有待处理文件列表")
+			GoTo out
 		End If
 
 		'Exit Sub
@@ -298,45 +373,87 @@ out:
 		Try
 			excelWbTmpl = excelApp.Workbooks.Add(Application.StartupPath & "\Tmpl.xlsx")
 		Catch e As Exception
+			logE("打开Excel模板: " & e.Message)
+			logE(e.StackTrace)
 			MsgBox("打开Excel模板: " & e.Message)
 			GoTo out
 		End Try
 
+		logFlush()
+
 		' 循环处理所有Excel
 		Try
 			For i = 0 To 待处理文件列表.Length - 1
+				logW("开始 - 处理: " & 待处理文件列表(i))
 				' 处理一个Excel
 				处理数据(待处理文件列表(i))
+				logW("结束 - 处理: " & 待处理文件列表(i))
+				logFlush()
 			Next
 		Catch e As Exception
+			logE("处理文件列表: " & e.Message)
+			logE(e.StackTrace)
 			MsgBox("处理文件列表: " & e.Message)
 		End Try
 
 		If Not excelWbTmpl Is Nothing Then
+			logW("关闭excelWbTmpl")
 			excelWbTmpl.Close(False)
 			excelWbTmpl = Nothing
 		End If
 
 		If Not wordDocTmpl Is Nothing Then
+			logW("关闭wordDocTmpl")
 			wordDocTmpl.Close(Word.WdSaveOptions.wdDoNotSaveChanges)
 			wordDoc = Nothing
 		End If
 
 out:
 		卸载应用()
+		logI("结束 - 处理事件")
+		logFlush()
 	End Sub
 
-	Private Sub Button1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button1.Click
+	Private Sub Worker()
 		Try
 			处理事件()
 		Catch ex As Exception
-			MsgBox("Click: " & ex.Message)
+			logE(ex.Message)
+			logE(ex.StackTrace)
 		End Try
+	End Sub
+
+	Private Sub Button1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button1.Click
+		Dim 对话框 As New System.Windows.Forms.OpenFileDialog
+
+		logI("开始 - 处理点击事件")
+
+		With 对话框
+			.InitialDirectory = Application.StartupPath
+			.Filter = "Excel files (*.xlsx;*.xls)|*.xlsx;*.xls"
+			.Multiselect = True
+			.ShowDialog()
+			待处理文件列表 = .FileNames
+		End With
+
+		logW("待处理文件列表: " & String.Join(",", 待处理文件列表))
+		If 待处理文件列表 Is Nothing Or 待处理文件列表.Length = 0 Then
+			logW("没有待处理文件列表")
+			GoTo out
+		End If
+
+		wk = New Thread(AddressOf Worker)
+		wk.Start()
+
+out:
+		logI("结束 - 处理点击事件")
 	End Sub
 
 	Function 打开报告()
 		Dim docFullName As String
 		Dim docPath As String
+
+		logW("开始 - 打开报告")
 
 		docPath = Application.StartupPath & "\" & excelWs.Range("D" & 当前行号).Value2 & "\" & excelWs.Range("E" & 当前行号).Value2 & "\" & excelWs.Range("F" & 当前行号).Value2
 		If Not Directory.Exists(docPath) Then
@@ -348,34 +465,59 @@ out:
 			If Not Directory.Exists(docPath) Then Directory.CreateDirectory(docPath)
 		End If
 		docFullName = docPath & "\" _
-		    & excelWs.Range("D" & 当前行号).Value2 & "_" & excelWs.Range("E" & 当前行号).Value2 & "_" & excelWs.Range("F" & 当前行号).Value2 & "_" & excelWs.Range("A" & 当前行号).Value2 & ".docx"
+		 & excelWs.Range("D" & 当前行号).Value2 & "_" & excelWs.Range("E" & 当前行号).Value2 & "_" & excelWs.Range("F" & 当前行号).Value2 & "_" & excelWs.Range("A" & 当前行号).Value2 & ".docx"
 
+		logW("打开报告模板")
 		wordDoc = wordApp.Documents.Add(Application.StartupPath & "\Tmpl.docx")
+		logW("保存报告: " & docFullName)
 		wordDoc.SaveAs(docFullName)
-		wordDoc.Application.Activate()
+		If displayWord Then wordDoc.Application.Activate()
+
+		logW("结束 - 打开报告")
 
 		打开报告 = 0
 	End Function
 
 	Function 关闭报告()
+		logW("开始 - 关闭报告")
+
 		wordDoc.Close(Word.WdSaveOptions.wdSaveChanges)
 		wordDoc = Nothing
+
+		logW("结束 - 关闭报告")
 
 		关闭报告 = 0
 	End Function
 
 	Function 生成首页()
+		logI("开始 - 生成首页")
+
 		' 学校名称
-		wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(2).Range.Text = excelWs.Range("D" & 当前行号).Value2
+		学校名称 = excelWs.Range("D" & 当前行号).Value2
 		' 年级班级
-		wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(5).Range.Text = excelWs.Range("F" & 当前行号).Value2
+		年级班级 = excelWs.Range("F" & 当前行号).Value2
 		' 学生姓名
-		wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(8).Range.Text = excelWs.Range("C" & 当前行号).Value2
+		学生姓名 = excelWs.Range("C" & 当前行号).Value2
+
+		' 学校名称
+		wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(2).Range.Text = 学校名称
+		' 年级班级
+		wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(5).Range.Text = 年级班级
+		' 学生姓名
+		wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(8).Range.Text = 学生姓名
+
+		logW("学校名称 " & 学校名称)
+		logW("年级班级 " & 年级班级)
+		logW("学生姓名 " & 学生姓名)
+
+		logI("结束 - 生成首页")
 
 		生成首页 = 0
 	End Function
 
 	Function 生成学生情况()
+		logI("开始 - 生成学生情况")
+
 		' 学生识别号
 		wordDoc.Tables(1).Cell(1, 2).Range.Text = excelWs.Range("A" & 当前行号).Text
 		' 性别
@@ -395,6 +537,8 @@ out:
 		' 所在学校
 		wordDoc.Tables(1).Cell(4, 2).Range.Text = excelWs.Range("D" & 当前行号).Text
 
+		logI("结束 - 生成学生情况")
+
 		生成学生情况 = 0
 	End Function
 
@@ -404,6 +548,8 @@ out:
 		Dim 内容 As String
 		Dim idx As UInt32 = 0
 		Dim i As UInt32 = 0
+
+		logI("开始 - 生成单项指标")
 
 		' 身体形态
 		内容 = excelWs.Range("O" & 当前行号).Text
@@ -431,17 +577,24 @@ out:
 		For i = 1 To 学生测试项信息(idx)
 			wordDoc.Tables(表格位置).Rows.Add()
 			测项序号 = 学生测试项信息(idx + i)
-			wordDoc.Tables(表格位置).Cell(3 + i, 1).Range.Text = 测项名称信息(测项序号)
+			内容 = 测项名称信息(测项序号)
+			logW(i & " " & idx & " 测项 " & 测项序号 & " " & 内容)
+			wordDoc.Tables(表格位置).Cell(3 + i, 1).Range.Text = 内容
 			内容 = excelWs.Cells(当前行号, 测项起始列号 + 3 * 测项序号 + 0).Text
 			If 内容 = "X" Then 内容 = ""
 			wordDoc.Tables(表格位置).Cell(3 + i, 2).Range.Text = 内容
+			logW(内容)
 			内容 = excelWs.Cells(当前行号, 测项起始列号 + 3 * 测项序号 + 1).Text
 			If 内容 = "X" Then 内容 = ""
+			logW(内容)
 			wordDoc.Tables(表格位置).Cell(3 + i, 3).Range.Text = 内容
 			内容 = excelWs.Cells(当前行号, 测项起始列号 + 3 * 测项序号 + 2).Text
 			If 内容 = "X" Then 内容 = ""
+			logW(内容)
 			wordDoc.Tables(表格位置).Cell(3 + i, 4).Range.Text = 内容
 		Next
+
+		logI("结束 - 生成单项指标")
 
 		生成单项指标 = 0
 	End Function
@@ -452,6 +605,8 @@ out:
 		Dim 测项序号 As UInt32 = 0
 		Dim idx As UInt32 = 0
 		Dim i As UInt32
+
+		logI("开始 - 生成各指标得分图表")
 
 		Try
 			图表工作表 = excelWbTmpl.Sheets(工作表名称信息(当前类别) & "图表")
@@ -470,7 +625,9 @@ out:
 			'图表工作表.Activate()
 			图表工作表.Application.Selection.copy()
 		Catch e As Exception
-			MsgBox("生成各指标得分图表:" & e.Message)
+			logE("生成各指标得分图表:" & e.Message)
+			logE(e.StackTrace)
+			'MsgBox("生成各指标得分图表:" & e.Message)
 			GoTo out
 		End Try
 
@@ -480,6 +637,8 @@ out:
 		wordDoc.Application.Selection.PasteAndFormat(Word.WdRecoveryType.wdChartPicture)
 
 out:
+		logI("结束 - 生成各指标得分图表")
+
 		生成各指标得分图表 = 0
 	End Function
 
@@ -491,9 +650,12 @@ out:
 		Else
 			转换百分比 = Int(数值 / 10) & "." & (数值 Mod 10)
 		End If
+		logI("转换百分比: " & 数值 & " > " & 转换百分比)
 	End Function
 
 	Function 生成学校整体情况()
+		logI("开始 - 生成学校整体情况")
+
 		Dim 表格位置 As UInt32 = 3
 		Dim i As UInt32 = 0
 
@@ -503,12 +665,16 @@ out:
 			wordDoc.Tables(表格位置).Cell(i + 2, 6).Range.Text = 转换百分比(各身体机能百分比(i))
 		Next
 
+		logI("结束- 生成学校整体情况")
+
 		生成学校整体情况 = 0
 	End Function
 
 	Function 生成运动处方()
 		Dim idx As UInt32
 		Dim i As UInt32
+
+		logI("开始 - 生成运动处方")
 
 		Dim wordFind As Word.Find
 		wordFind = wordDoc.Application.Selection.Find
@@ -534,6 +700,7 @@ out:
 
 		' 学生评价等级的建议
 		等级 = 计算等级(excelWsTmpl.Range("I" & 当前行号).Text)
+		logW("等级 " & 等级)
 		wordDoc.Application.Selection.Style = "主标题1"
 		wordDoc.Application.Selection.TypeText("（一）" & excelWsTmpl.Range("A1").Text)
 		wordDoc.Application.Selection.TypeParagraph()
@@ -610,10 +777,14 @@ out:
 			wordDoc.Application.Selection.TypeParagraph()
 		Next
 
+		logI("结束 - 生成运动处方")
+
 		生成运动处方 = 0
 	End Function
 
 	Function 生成报告()
+		logI("开始 - 生成报告")
+
 		生成首页()
 
 		生成学生情况()
@@ -626,6 +797,8 @@ out:
 
 		生成运动处方()
 
+		logI("结束 - 生成报告")
+
 		生成报告 = 0
 	End Function
 
@@ -637,29 +810,8 @@ out:
 		' 在 InitializeComponent() 调用之后添加任何初始化。
 
 	End Sub
-End Class
 
-
-Public Class GanYuXueXiaoZhengTiQingKuang
-	Dim dengJiBaiFengBiYouXiu As String
-	Dim dengJiBaiFengBiLiangHao As String
-	Dim dengJiBaiFengBiJiGe As String
-	Dim dengJiBaiFengBiBuJiGe As String
-
-	Dim shenTiXingTaiBaiFenBiZhengChang As String
-	Dim shenTiXingTaiBaiFenBiDiTiZhong As String
-	Dim shenTiXingTaiBaiFenBiChaoZhong As String
-	Dim shenTiXingTaiBaiFenBiFeiPang As String
-
-	Dim shenTiJiNengYouXiu As String
-	Dim shenTiJiNengLh As String
-	Dim shenTiJiNengJg As String
-	Dim shenTiJiNengBjg As String
-End Class
-
-Public Class EntryType
-	Dim hangHao As Long
-	Dim yunDongChuFangSheetName As String
-
-
+	Protected Overrides Sub Finalize()
+		MyBase.Finalize()
+	End Sub
 End Class
