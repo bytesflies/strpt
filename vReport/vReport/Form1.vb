@@ -129,7 +129,7 @@ Public Class Form1
 	Protected Sub log(ByVal tag As String, ByVal msg As String)
 		Dim m As String
 		m = String.Format("[{0}] {1} {2}", Now, tag, msg)
-		If tag <> "信息" Then RichTextBox1.Invoke(dlgt, m)
+		If tag <> "信息" Then RichTextBox1.BeginInvoke(dlgt, m)
 		If Not logger Is Nothing Then logger.WriteLine(m)
 	End Sub
 
@@ -154,24 +154,32 @@ Public Class Form1
 		log("致命", msg)
 	End Sub
 
-	Private Sub cancelReport()
+	Private Sub cancelReport(ByVal wait As UInt32)
 		If wk Is Nothing Then Exit Sub
 		Thread.VolatileWrite(wkExiting, 1)
-		wk.Join()
-		wk = Nothing
+
+retry:
+		If Thread.VolatileRead(wkDone) = 1 Then
+			wk.Join()
+			wk = Nothing
+			wkStart = 0
+			Exit Sub
+		End If
+
+		If wait = 1 Then GoTo retry
 	End Sub
 
 	Private Sub Form1_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
 		Dim ts As Date
 		ts = Now
-		logger = New StreamWriter(String.Format("log_{0:04}{1}{2}{3}{4}{5}.txt", ts.Year, ts.Month, ts.Day, ts.Hour, ts.Minute, ts.Second), True)
+		logger = New StreamWriter(String.Format("log_{0:04}{1,2:d2}{2,2:d2}{3,2:d2}{4,2:d2}{5,2:d2}.txt", ts.Year, ts.Month, ts.Day, ts.Hour, ts.Minute, ts.Second), True)
 		logW("程序启动")
 
 		' 装载应用()
 	End Sub
 
 	Private Sub Form1_FormClosed(ByVal sender As System.Object, ByVal e As System.Windows.Forms.FormClosedEventArgs) Handles MyBase.FormClosed
-		cancelReport()
+		cancelReport(1)
 
 		卸载应用()
 
@@ -444,17 +452,19 @@ out:
 			logE(ex.Message)
 			logE(ex.StackTrace)
 		End Try
+
 		Thread.VolatileWrite(wkDone, 1)
 	End Sub
 
 	Private Sub Button1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button1.Click
 		If Thread.VolatileRead(wkStart) Then
-			If Not Thread.VolatileRead(wkDone) Then
+			If Thread.VolatileRead(wkDone) = 0 Then
 				MsgBox("正在处理中 ...")
 				Exit Sub
 			End If
 			wk.Join()
 			wk = Nothing
+			wkStart = False
 		End If
 
 		Dim 对话框 As New System.Windows.Forms.OpenFileDialog
@@ -486,7 +496,7 @@ out:
 	End Sub
 
 	Private Sub Button2_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button2.Click
-		cancelReport()
+		cancelReport(0)
 	End Sub
 
 	Function 打开报告()
@@ -558,22 +568,24 @@ out:
 	Function 生成学生情况()
 		logI("开始 - 生成学生情况")
 
+		' 姓名
+		wordDoc.Tables(1).Cell(1, 2).Range.Text = excelWs.Range("C" & 当前行号).Text
 		' 学生识别号
-		wordDoc.Tables(1).Cell(1, 2).Range.Text = excelWs.Range("A" & 当前行号).Text
+		wordDoc.Tables(1).Cell(1, 4).Range.Text = excelWs.Range("A" & 当前行号).Text
 		' 性别
-		wordDoc.Tables(1).Cell(1, 4).Range.Text = excelWs.Range("G" & 当前行号).Text
+		wordDoc.Tables(1).Cell(1, 6).Range.Text = excelWs.Range("G" & 当前行号).Text
 		' 年级
-		wordDoc.Tables(1).Cell(1, 6).Range.Text = excelWs.Range("E" & 当前行号).Text
+		wordDoc.Tables(1).Cell(2, 2).Range.Text = excelWs.Range("E" & 当前行号).Text
 		' 班级
-		wordDoc.Tables(1).Cell(2, 2).Range.Text = excelWs.Range("F" & 当前行号).Text
+		wordDoc.Tables(1).Cell(2, 4).Range.Text = excelWs.Range("F" & 当前行号).Text
 		' 测试成绩
-		wordDoc.Tables(1).Cell(2, 4).Range.Text = excelWs.Range("J" & 当前行号).Text
+		wordDoc.Tables(1).Cell(2, 6).Range.Text = excelWs.Range("J" & 当前行号).Text
 		' 测试等级
-		wordDoc.Tables(1).Cell(2, 6).Range.Text = excelWs.Range("K" & 当前行号).Text
+		wordDoc.Tables(1).Cell(3, 2).Range.Text = excelWs.Range("K" & 当前行号).Text
 		' 综合成绩
-		wordDoc.Tables(1).Cell(3, 2).Range.Text = excelWs.Range("H" & 当前行号).Text
+		wordDoc.Tables(1).Cell(3, 4).Range.Text = excelWs.Range("H" & 当前行号).Text
 		' 综合等级
-		wordDoc.Tables(1).Cell(3, 4).Range.Text = excelWs.Range("I" & 当前行号).Text
+		wordDoc.Tables(1).Cell(3, 6).Range.Text = excelWs.Range("I" & 当前行号).Text
 		' 所在学校
 		wordDoc.Tables(1).Cell(4, 2).Range.Text = excelWs.Range("D" & 当前行号).Text
 
