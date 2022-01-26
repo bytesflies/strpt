@@ -70,6 +70,8 @@ Public Class Form1
 
 	Dim 待处理文件列表() As String
 
+	Dim st As Student
+
 	' 资源信息
 
 	Dim wk As Thread
@@ -89,7 +91,7 @@ Public Class Form1
 	Dim excelWs As Excel.Worksheet
 
 	' 配置
-	Dim displayExcel As Boolean = False
+	Dim displayExcel As Boolean = True
 	Dim displayWord As Boolean = False
 
 	' 日志
@@ -122,8 +124,14 @@ Public Class Form1
 	Private Delegate Sub logToUIDelegate(ByRef msg As String)
 	Dim dlgt As New logToUIDelegate(AddressOf logtoUI)
 
+	Private sb As System.Text.StringBuilder = New System.Text.StringBuilder
+
 	Sub logtoUI(ByRef msg As String)
-		RichTextBox1.Text = msg & Chr(13) & Chr(10) & RichTextBox1.Text
+		'RichTextBox1.Text = msg & Chr(13) & Chr(10) & RichTextBox1.Text
+		sb.AppendLine(msg)
+		RichTextBox1.Text = sb.ToString
+		RichTextBox1.SelectionStart = RichTextBox1.Text.Length
+		RichTextBox1.ScrollToCaret()
 	End Sub
 
 	Protected Sub log(ByVal tag As String, ByVal msg As String)
@@ -172,7 +180,7 @@ retry:
 	Private Sub Form1_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
 		Dim ts As Date
 		ts = Now
-		logger = New StreamWriter(String.Format("log_{0:04}{1,2:d2}{2,2:d2}{3,2:d2}{4,2:d2}{5,2:d2}.txt", ts.Year, ts.Month, ts.Day, ts.Hour, ts.Minute, ts.Second), True)
+		logger = New StreamWriter(String.Format("log_{0}{1,2:d2}{2,2:d2}{3,2:d2}{4,2:d2}{5,2:d2}.txt", ts.Year, ts.Month, ts.Day, ts.Hour, ts.Minute, ts.Second), True)
 		logW("程序启动")
 
 		' 装载应用()
@@ -331,7 +339,7 @@ out:
 		logI("开始 - 处理数据 " & 待处理文件)
 
 		Try
-			excelWb = excelApp.Workbooks.Add(待处理文件)
+			excelWb = excelApp.Workbooks.Open(待处理文件, Nothing, True)
 			excelWs = excelWb.Sheets(1)
 		Catch e As Exception
 			logE(e.Message)
@@ -339,10 +347,49 @@ out:
 			GoTo out
 		End Try
 
-		If excelWs.Range("A" & 1).Text <> "ID" Then
-			logE("不识别的待处理文件:" & 待处理文件)
-			MsgBox("不识别的待处理文件:" & 待处理文件)
+		If excelWs.Range("A1").Text = "学校名称" Then
+			Dim excelWbDst As Excel.Workbook
+			Try
+				excelWbDst = excelApp.Workbooks.Add()
+				excelWbDst.Application.DisplayAlerts = False
+				excelWbDst.SaveAs(Strings.Replace(待处理文件, ".xls", "-数据.xls"))
+				excelWbDst.Application.DisplayAlerts = True
+			Catch e As Exception
+				logE("不能打开输出文件: " & e.Message)
+				logE("不能打开输出文件: " & e.StackTrace)
+				GoTo out
+			End Try
+			Try
+				' Entry
+				start(excelWs, excelWbDst.Sheets(1))
+			Catch e As Exception
+				logE("处理Excel数据: " & e.Message)
+				logE("处理Excel数据: " & e.StackTrace)
+				excelWbDst.Close(Excel.XlSaveAction.xlDoNotSaveChanges)
+				excelWbDst = Nothing
+				GoTo out
+			End Try
+			excelWbDst.Close(Excel.XlSaveAction.xlSaveChanges)
+			excelWbDst = Nothing
 			GoTo out
+		End If
+
+
+		If excelWs.Range("A1").Text <> "ID" Then
+			logE("不识别的待处理文件:" & 待处理文件)
+			'MsgBox("不识别的待处理文件:" & 待处理文件)
+			GoTo out
+		End If
+
+		If excelWbTmpl Is Nothing Then
+			Try
+				excelWbTmpl = excelApp.Workbooks.Add(Application.StartupPath & "\Tmpl.xlsx")
+			Catch e As Exception
+				logE("打开Excel模板: " & e.Message)
+				logE(e.StackTrace)
+				'MsgBox("打开Excel模板: " & e.Message)
+				GoTo out
+			End Try
 		End If
 
 		Try
@@ -367,7 +414,7 @@ out:
 				If wkExiting Then Exit Do
 
 				' Release版本2分钟处理42笔数据
-				If 当前行号 > 10 Then Exit Do
+				'If 当前行号 > 10 Then Exit Do
 			Loop
 		Catch e As Exception
 			logE("处理数据:" & e.Message)
@@ -381,7 +428,9 @@ out:
 		End If
 		excelWs = Nothing
 		If Not excelWb Is Nothing Then
-			excelWb.Close()
+			excelWb.Application.DisplayAlerts = False
+			excelWb.Close(Excel.XlSaveAction.xlDoNotSaveChanges)
+			excelWb.Application.DisplayAlerts = True
 			excelWb = Nothing
 		End If
 		logI("结束 - 处理数据 " & 待处理文件)
@@ -399,15 +448,6 @@ out:
 		'Exit Sub
 
 		装载应用()
-
-		Try
-			excelWbTmpl = excelApp.Workbooks.Add(Application.StartupPath & "\Tmpl.xlsx")
-		Catch e As Exception
-			logE("打开Excel模板: " & e.Message)
-			logE(e.StackTrace)
-			MsgBox("打开Excel模板: " & e.Message)
-			GoTo out
-		End Try
 
 		logFlush()
 
@@ -856,6 +896,9 @@ out:
 
 	Public Sub New()
 
+		st = New Student()
+		ReDim st.arr(128)
+
 		' 此调用是 Windows 窗体设计器所必需的。
 		InitializeComponent()
 
@@ -1201,9 +1244,8 @@ out:
 	  10, 163, 159, 345, 340, 335, 330, 328, 326, 324, 322}
 
 	Sub start(ByRef excelWsSrc As Excel.Worksheet, ByRef excelWsDst As Excel.Worksheet)
-		Dim st As Student
 		Dim row As Long
-		Dim offset As Long
+		'Dim offset As Long
 
 		Dim dbg As Long
 
@@ -1215,9 +1257,6 @@ out:
 		'	offset = 1 - ActiveCell.row()
 		'End If
 
-		st = New Student()
-		ReDim st.arr(128)
-
 		logW("创建表头")
 
 		createStudentReportHeader(excelWsDst)
@@ -1227,6 +1266,8 @@ out:
 
 		row = 2
 		Do While True
+			logW(String.Format("生成第{0}行", row))
+
 			' end of data
 			If excelWsSrc.Range("A" & row).Text = "" Then Exit Do
 
@@ -1249,6 +1290,8 @@ out:
 
 			createStudentReport(excelWsSrc, row, st, excelWsDst)
 
+			If wkExiting Then Exit Do
+
 			If dbg = 1 Then Exit Do
 rowComplete:
 			If row Mod 200 = 0 Then
@@ -1256,7 +1299,7 @@ rowComplete:
 				'Debug.Print "[" & t1 & "]: "; "已经生成到" & row & "行, 耗时 " & t1 - t0 & " ms ..."
 			End If
 			row = row + 1
-			offset = offset + 1
+			'offset = offset + 1
 		Loop
 		't1 = timeGetTime()
 		'      Debug.Print "[" & t1 & "]: "; "已经生成到" & row & "行, 耗时 " & t1 - t0 & " ms ..."
@@ -1364,8 +1407,8 @@ rowComplete:
 			st.schoolStr = excelWsSrc.Range("A" & row).Text
 			st.classStr = excelWsSrc.Range("D" & row).Text
 			st.nameStr = excelWsSrc.Range("G" & row).Text
-			st.genderStr = excelWsSrc.Range("H" & row).Value
-			st.gender = excelWsSrc.Range("H" & row).Text
+			st.genderStr = excelWsSrc.Range("H" & row).Text
+			st.gender = excelWsSrc.Range("H" & row).Value2
 			st.gradeStr = excelWsSrc.Range("B" & row).Text
 			st.heightStr = excelWsSrc.Range("M" & row).Text
 			st.weightStr = excelWsSrc.Range("N" & row).Text
@@ -1409,6 +1452,8 @@ rowComplete:
 				'st.nlp1Str = Range("T" & row)
 			End If
 		End If
+
+		logW(String.Format("{0} {1} {2} {3} {4}", st.nameStr, st.gender, st.schoolStr, st.gradeStr, st.classStr))
 
 		'st.gender = Int(Val(st.genderStr))
 		st.grade = calcGradeIdx(Val(st.gradeStr))
@@ -1472,9 +1517,9 @@ rowComplete:
 	End Sub
 
 	Sub createStudentReportHeader(ByRef excelWsDst As Excel.Worksheet)
-		Dim cols As Long
-		cols = UBound(rptHdrTbl)
-		excelWsDst.Cells(1, cols) = rptHdrTbl
+		For i = 1 To UBound(rptHdrTbl)
+			excelWsDst.Cells(1, i).Value2 = rptHdrTbl(i)
+		Next
 	End Sub
 
 	Sub createStudentReport(ByRef excelWsSrc As Excel.Worksheet, ByVal row As Long, ByRef st As Student, ByRef excelWsDst As Excel.Worksheet)
@@ -1752,8 +1797,12 @@ rowComplete:
 			End If
 			col = col + 3
 		End With
-
-		excelWsDst.Cells(1, col) = st.arr
+		Exit Sub
+		'excelWsDst.Cells(1, col) = st.arr
+		Dim i As UInt32
+		For i = 1 To UBound(st.arr)
+			excelWsDst.Cells(row, i).value2 = st.arr(i)
+		Next
 		'ActiveCell.offset(offset, 0).Resize(1, col) = st.arr
 	End Sub
 
