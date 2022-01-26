@@ -91,7 +91,7 @@ Public Class Form1
 	Dim excelWs As Excel.Worksheet
 
 	' 配置
-	Dim displayExcel As Boolean = True
+	Dim displayExcel As Boolean = False
 	Dim displayWord As Boolean = False
 
 	' 日志
@@ -428,9 +428,7 @@ out:
 		End If
 		excelWs = Nothing
 		If Not excelWb Is Nothing Then
-			excelWb.Application.DisplayAlerts = False
 			excelWb.Close(Excel.XlSaveAction.xlDoNotSaveChanges)
-			excelWb.Application.DisplayAlerts = True
 			excelWb = Nothing
 		End If
 		logI("结束 - 处理数据 " & 待处理文件)
