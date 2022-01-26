@@ -73,6 +73,9 @@ Public Class Form1
 	' 资源信息
 
 	Dim wk As Thread
+	Dim wkStart As UInt32
+	Dim wkDone As UInt32
+	Dim wkExiting As UInt32
 
 	Dim wordApp As Word.Application
 	Dim excelApp As Excel.Application
@@ -151,6 +154,13 @@ Public Class Form1
 		log("致命", msg)
 	End Sub
 
+	Private Sub cancelReport()
+		If wk Is Nothing Then Exit Sub
+		Thread.VolatileWrite(wkExiting, 1)
+		wk.Join()
+		wk = Nothing
+	End Sub
+
 	Private Sub Form1_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
 		Dim ts As Date
 		ts = Now
@@ -161,7 +171,7 @@ Public Class Form1
 	End Sub
 
 	Private Sub Form1_FormClosed(ByVal sender As System.Object, ByVal e As System.Windows.Forms.FormClosedEventArgs) Handles MyBase.FormClosed
-		If Not wk Is Nothing Then wk.Join()
+		cancelReport()
 
 		卸载应用()
 
@@ -346,8 +356,10 @@ out:
 
 				当前行号 = 当前行号 + 1
 
+				If wkExiting Then Exit Do
+
 				' Release版本2分钟处理42笔数据
-				If 当前行号 > 3 Then Exit Do
+				If 当前行号 > 10 Then Exit Do
 			Loop
 		Catch e As Exception
 			logE("处理数据:" & e.Message)
@@ -399,6 +411,7 @@ out:
 				处理数据(待处理文件列表(i))
 				logW("结束 - 处理: " & 待处理文件列表(i))
 				logFlush()
+				If wkExiting Then Exit For
 			Next
 		Catch e As Exception
 			logE("处理文件列表: " & e.Message)
@@ -431,9 +444,19 @@ out:
 			logE(ex.Message)
 			logE(ex.StackTrace)
 		End Try
+		Thread.VolatileWrite(wkDone, 1)
 	End Sub
 
 	Private Sub Button1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button1.Click
+		If Thread.VolatileRead(wkStart) Then
+			If Not Thread.VolatileRead(wkDone) Then
+				MsgBox("正在处理中 ...")
+				Exit Sub
+			End If
+			wk.Join()
+			wk = Nothing
+		End If
+
 		Dim 对话框 As New System.Windows.Forms.OpenFileDialog
 
 		logI("开始 - 处理点击事件")
@@ -452,11 +475,18 @@ out:
 			GoTo out
 		End If
 
+		Thread.VolatileWrite(wkExiting, 0)
+		Thread.VolatileWrite(wkDone, 0)
 		wk = New Thread(AddressOf Worker)
 		wk.Start()
+		Thread.VolatileWrite(wkStart, 1)
 
 out:
 		logI("结束 - 处理点击事件")
+	End Sub
+
+	Private Sub Button2_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button2.Click
+		cancelReport()
 	End Sub
 
 	Function 打开报告()
