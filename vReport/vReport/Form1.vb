@@ -888,6 +888,12 @@ out:
 		Dim col As UInt32
 		Dim i As UInt32 = 0
 
+		'logW("count " & wordDoc.Tables.Count & " " & 表格位置)
+		If wordDoc.Tables.Count < 表格位置 Then
+			logW("没有找到学校整体情况")
+			GoTo out
+		End If
+
 		' last col (0) -> Name (1) -> Count(2) -> Percent(3)
 		col = rptHdrTbl.Length + 3
 
@@ -897,6 +903,7 @@ out:
 			wordDoc.Tables(表格位置).Cell(i + 2, 6).Range.Text = 格式化百分比(excelWs.Cells(i + 2, col + 6).Value2)
 		Next
 
+out:
 		logI("结束- 生成学校整体情况")
 
 		生成学校整体情况 = 0
