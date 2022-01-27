@@ -64,11 +64,16 @@ Public Class Form1
 	Dim 年级班级 As String
 	Dim 学生姓名 As String
 
-	Dim 各等级百分比(4) As UInt32
-	Dim 各身体形态百分比(4) As UInt32
-	Dim 各身体机能百分比(4) As UInt32
+	Dim 各等级百分比 As UInt32() = {0, 0, 0, 0}
+	Dim 各身体形态百分比 As UInt32() = {0, 0, 0, 0}
+	Dim 各身体机能百分比 As UInt32() = {0, 0, 0, 0}
 
 	Dim 待处理文件列表() As String
+
+	' 为了生成学校整体状态
+	Dim 各等级计数 As UInt32() = {0, 0, 0, 0}
+	Dim 各身体形态计数 As UInt32() = {0, 0, 0, 0}
+	Dim 各身体机能计数 As UInt32() = {0, 0, 0, 0}
 
 	Dim st As Student
 
@@ -325,67 +330,93 @@ retry:
 	End Function
 
 	Private Function 计算百分比(ByRef 计数() As UInt32, ByRef 百分比() As UInt32)
-		Dim 余数 As UInt32
-		Dim 百分比和 As UInt32
+		Dim 百分比和 As UInt32 = 0
+		Dim 总和 As UInt32 = 0
+		Dim 余数(3) As UInt32
+		Dim idx As Int32
+		Dim max As UInt32
 		Dim i As UInt32
+		Dim j As UInt32
 
-		For i = 0 To 4
+		For i = 0 To 3
 			百分比(i) = 0
+			总和 += 计数(i)
 		Next
 
-		If 计数(0) = 0 Then GoTo out
+		If 总和 = 0 Then GoTo out
 
 		logI("计数(0): " & 计数(0))
+
 		百分比和 = 0
-		For i = 1 To 3
-			百分比(i - 1) = 10000 * (计数(i)) / 计数(0)
-			余数 = 百分比(i - 1) Mod 10
-			百分比(i - 1) = Int(百分比(i - 1) / 10)
-			logI("百分比" & (i - 1) & ": " & 百分比(i - 1))
-			If 余数 >= 5 Then 百分比(i - 1) = 百分比(i - 1) + 1
-			百分比和 = 百分比和 + 百分比(i - 1)
+		For i = 0 To 3
+			百分比(i) = Int(100000 * (计数(i)) / 总和)
+			余数(i) = 百分比(i) Mod 10
+			百分比(i) = Int(百分比(i) / 10)
 		Next
-		百分比(3) = 1000 - 百分比和
-		logI("百分比3: " & 百分比(3))
+
+		总和 = 0
+		For i = 0 To 3
+			总和 += 百分比(i)
+		Next
+
+		For i = 总和 To 10000
+			If i >= 10000 Then Exit For
+			idx = -1
+			max = 0
+			For j = 0 To 3
+				If 余数(j) > max Then
+					idx = j
+					max = 余数(j)
+				End If
+			Next
+			If idx >= 0 Then
+				百分比(idx) += 1
+				余数(idx) = 0
+			End If
+		Next
+
+		For i = 0 To 3
+			logI(String.Format("计数({0}): {1} {2}", i, 计数(i), 百分比(i)))
+		Next
 
 out:
 		计算百分比 = 0
 	End Function
 
 	Private Function 计算学校整体情况()
-		Dim 各等级计数(5) As UInt32
-		Dim 各身体形态计数(5) As UInt32
-		Dim 各身体机能计数(5) As UInt32
-		Dim 行号 As UInt32
-		Dim 类别 As UInt32
+		'Dim 各等级计数(5) As UInt32
+		'Dim 各身体形态计数(5) As UInt32
+		'Dim 各身体机能计数(5) As UInt32
+		'Dim 行号 As UInt32
+		'Dim 类别 As UInt32
 
-		行号 = 2
-		Do While True
-			If excelWs.Range("B" & 行号).Text = "" Then Exit Do
+		'行号 = 2
+		'Do While True
+		'	If excelWs.Range("B" & 行号).Text = "" Then Exit Do
 
-			类别 = 计算等级(excelWs.Range("I" & 行号).Text)
-			各等级计数(类别 + 1) = 各等级计数(类别 + 1) + 1
-			各等级计数(0) = 各等级计数(0) + 1
-			类别 = 计算身体形态等级(excelWs.Range("Q" & 行号).Text)
-			各身体形态计数(类别 + 1) = 各身体形态计数(类别 + 1) + 1
-			各身体形态计数(0) = 各身体形态计数(0) + 1
-			类别 = 计算等级(excelWs.Range("T" & 行号).Text)
-			各身体机能计数(类别 + 1) = 各身体机能计数(类别 + 1) + 1
-			各身体机能计数(0) = 各身体机能计数(0) + 1
+		'	类别 = 计算等级(excelWs.Range("I" & 行号).Text)
+		'	各等级计数(类别 + 1) = 各等级计数(类别 + 1) + 1
+		'	各等级计数(0) = 各等级计数(0) + 1
+		'	类别 = 计算身体形态等级(excelWs.Range("Q" & 行号).Text)
+		'	各身体形态计数(类别 + 1) = 各身体形态计数(类别 + 1) + 1
+		'	各身体形态计数(0) = 各身体形态计数(0) + 1
+		'	类别 = 计算等级(excelWs.Range("T" & 行号).Text)
+		'	各身体机能计数(类别 + 1) = 各身体机能计数(类别 + 1) + 1
+		'	各身体机能计数(0) = 各身体机能计数(0) + 1
 
-			行号 = 行号 + 1
-		Loop
+		'	行号 = 行号 + 1
+		'Loop
 
-		Dim i As UInt32
-		For i = 0 To 5
-			logI("各等级计数" & i & ": " & 各等级计数(i))
-			logI("各身体形态计数" & i & ": " & 各身体形态计数(i))
-			logI("各身体机能计数" & i & ": " & 各身体机能计数(i))
-		Next
+		'Dim i As UInt32
+		'For i = 0 To 5
+		'	logI("各等级计数" & i & ": " & 各等级计数(i))
+		'	logI("各身体形态计数" & i & ": " & 各身体形态计数(i))
+		'	logI("各身体机能计数" & i & ": " & 各身体机能计数(i))
+		'Next
 
-		计算百分比(各等级计数, 各等级百分比)
-		计算百分比(各身体形态计数, 各身体形态百分比)
-		计算百分比(各身体机能计数, 各身体机能百分比)
+		'计算百分比(各等级计数, 各等级百分比)
+		'计算百分比(各身体形态计数, 各身体形态百分比)
+		'计算百分比(各身体机能计数, 各身体机能百分比)
 
 		计算学校整体情况 = 0
 	End Function
@@ -818,13 +849,16 @@ out:
 		生成各指标得分图表 = 0
 	End Function
 
+	' 10000 倍
 	Function 转换百分比(ByVal 数值 As UInt32)
 		If 数值 = 0 Then
 			转换百分比 = ""
 		ElseIf 数值 < 10 Then
+			转换百分比 = "0.0" & 数值
+		ElseIf 数值 < 100 Then
 			转换百分比 = "0." & 数值
 		Else
-			转换百分比 = Int(数值 / 10) & "." & (数值 Mod 10)
+			转换百分比 = Int(数值 / 100) & "." & (数值 Mod 100)
 		End If
 		logI("转换百分比: " & 数值 & " > " & 转换百分比)
 	End Function
@@ -996,7 +1030,7 @@ out:
 
 	' table header
 	Private rptHdrTbl() As String = { _
-	"姓名", "ID", "学校", "年级", "班级", "性别", _
+	"是否参测", "缺项数量", "ID", "所属区", "姓名", "学校", "学段", "年级", "班级", "性别", _
 	"综合成绩", "综合评定", "测试成绩", "测试成绩评定", "附加分", _
 	"身高成绩", "体重成绩", "身高体重指数", "身高体重成绩", "身高体重等级", _
 	"肺活量成绩", "肺活量得分", "肺活量等级", _
@@ -1008,13 +1042,20 @@ out:
 	"立定跳远成绩", "立定跳远得分", "立定跳远等级", _
 	"800米跑成绩", "800米跑得分", "800米跑等级", _
 	"1000米跑成绩", "1000米跑得分", "1000米跑等级", _
-	"引体向上成绩", "引体向上得分", "引体向上等级"}
+	"引体向上成绩", "引体向上得分", "引体向上等级", _
+	"是否有一分钟跳绳", "一分钟跳绳附加分", _
+	"是否有一分钟仰卧起坐", "一分钟仰卧起坐附加分", _
+	"是否有50米×8往返跑", "50米×8往返跑附加分", _
+	"是否有立定跳远", "立定跳远附加分", _
+	"是否有800米跑", "800米跑附加分", _
+	"是否有1000米跑", "1000米跑附加分", _
+	"是否有引体向上", "引体向上附加分"}
 
 	Private gradeNameTbl() As String = { _
-	  "一年级", "二年级", "三年级", "四年级", "五年级", "六年级", _
-	  "初一", "初二", "初三", _
-	  "高一", "高二", "高三", _
-	  "大一", "大二", "大三", "大四"}
+	"一年级", "二年级", "三年级", "四年级", "五年级", "六年级", _
+	"初一", "初二", "初三", _
+	"高一", "高二", "高三", _
+	"大一", "大二", "大三", "大四"}
 
 	Private BMIData() As Int32 = { _
 	  135, 137, 139, 142, 144, 147, 155, 157, 158, 165, 168, 173, 179, _
@@ -1341,6 +1382,13 @@ out:
 		'	offset = 1 - ActiveCell.row()
 		'End If
 
+		' 重置学校整体情况
+		For i = 0 To 3
+			各等级计数(i) = 0
+			各身体形态计数(i) = 0
+			各身体机能计数(i) = 0
+		Next
+
 		logW("创建表头")
 
 		createStudentReportHeader(excelWsDst)
@@ -1380,20 +1428,16 @@ out:
 
 			If wkExiting Then Exit Do
 
+			' debug
+			'If row > 3 Then Exit Do
+
 			If dbg = 1 Then Exit Do
 rowComplete:
-			If row Mod 200 = 0 Then
-				't1 = timeGetTime()
-				'Debug.Print "[" & t1 & "]: "; "已经生成到" & row & "行, 耗时 " & t1 - t0 & " ms ..."
-			End If
 			row = row + 1
-			'offset = offset + 1
 		Loop
-		't1 = timeGetTime()
-		'      Debug.Print "[" & t1 & "]: "; "已经生成到" & row & "行, 耗时 " & t1 - t0 & " ms ..."
-		'      Debug.Print "[" & timeGetTime() & "]: "; "生成结束 ..."
-		'Debug.Print("")
-		'Application.ScreenUpdating = True
+
+		createSchoolOveral(excelWsDst)
+
 		logW("生成结束")
 	End Sub
 
@@ -1464,9 +1508,9 @@ rowComplete:
 		st.totalScore = 0
 		st.totalJfScore = 0
 
-		For i = 0 To UBound(rptHdrTbl)
-			st.arr(i) = ""
-		Next
+		'For i = 0 To UBound(rptHdrTbl)
+		'st.arr(i) = ""
+		'Next
 	End Sub
 
 	Function timeToSeconds(ByVal t As String)
@@ -1612,7 +1656,27 @@ rowComplete:
 		'For i = 1 To UBound(rptHdrTbl)
 		'	excelWsDst.Cells(1, i).Value2 = rptHdrTbl(i)
 		'Next
-		excelWsDst.Range(excelWsDst.Cells(1, 1), excelWsDst.Cells(1, UBound(rptHdrTbl) + 1)).Value2 = rptHdrTbl
+		excelWsDst.Range(excelWsDst.Cells(1, 1), excelWsDst.Cells(1, rptHdrTbl.Count())).Value2 = rptHdrTbl
+	End Sub
+
+	Sub createSchoolOveral(ByRef excelWsDst As Excel.Worksheet)
+		Dim hdr() As String = {"综合评定等级占比", "", "", "身体形态（BMI）评定等级占比", "", "", "身体机能（肺活量）评定等级占比", "", ""}
+
+		计算百分比(各等级计数, 各等级百分比)
+		计算百分比(各身体形态计数, 各身体形态百分比)
+		计算百分比(各身体机能计数, 各身体机能百分比)
+
+		' header
+		excelWsDst.Range(excelWsDst.Cells(1, rptHdrTbl.Count() + 1), excelWsDst.Cells(1, rptHdrTbl.Count() + hdr.Count())).Value2 = hdr
+		'data
+		For i = 0 To 3
+			excelWsDst.Cells(2 + i, rptHdrTbl.Count() + 2).value2 = 各等级计数(i)
+			excelWsDst.Cells(2 + i, rptHdrTbl.Count() + 3).value2 = 转换百分比(各等级百分比(i))
+			excelWsDst.Cells(2 + i, rptHdrTbl.Count() + 5).value2 = 各身体形态计数(i)
+			excelWsDst.Cells(2 + i, rptHdrTbl.Count() + 6).value2 = 转换百分比(各身体形态百分比(i))
+			excelWsDst.Cells(2 + i, rptHdrTbl.Count() + 8).value2 = 各身体机能计数(i)
+			excelWsDst.Cells(2 + i, rptHdrTbl.Count() + 9).value2 = 转换百分比(各身体机能百分比(i))
+		Next
 	End Sub
 
 	Sub createStudentReport(ByRef excelWsSrc As Excel.Worksheet, ByVal row As Long, ByRef st As Student, ByRef excelWsDst As Excel.Worksheet)
@@ -1621,16 +1685,37 @@ rowComplete:
 		Dim col As Long
 		col = 0
 		Dim has As Long
+		Dim 是否参测 As Int32 = 0
+		Dim 缺项数量 As Int32 = 0
+
+		Dim 是否有跳绳 As Int32 = 0
+		Dim 是否有仰卧起坐 As Int32 = 0
+		Dim 是否有50x8 As Int32 = 0
+		Dim 是否有立定跳远 As Int32 = 0
+		Dim 是否有800米 As Int32 = 0
+		Dim 是否有1000米 As Int32 = 0
+		Dim 是否有引体向上 As Int32 = 0
+
+		Dim tmp As String
+
+		' 空两个位置放"是否参测"和"缺项数量"
+		col = 2
 
 		With st
-			' 姓名
-			.arr(col) = st.nameStr
-			col = col + 1
 			' ID
 			.arr(col) = st.idStr
 			col = col + 1
+			' 所属区 TODO
+			.arr(col) = ""
+			col = col + 1
+			' 姓名
+			.arr(col) = st.nameStr
+			col = col + 1
 			' 学校
 			.arr(col) = st.schoolStr
+			col = col + 1
+			' 学段 TODO
+			.arr(col) = getStageName(st.grade)
 			col = col + 1
 			' 年级
 			.arr(col) = getGradeName(st.grade)
@@ -1647,6 +1732,8 @@ rowComplete:
 			col = col + 1
 
 			If st.totalValid = 1 Then
+				是否参测 = 1
+				tmp = getTotalLevel(st.totalScore)
 				' 综合成绩
 				.arr(col + 0) = Math.Round(Int((st.totalScore + st.totalJfScore + 5) / 10) / 10, 1)
 				' 综合评定
@@ -1654,15 +1741,20 @@ rowComplete:
 				' 测试成绩
 				.arr(col + 2) = Math.Round(Int((st.totalScore + 5) / 10) / 10, 1)
 				' 测试评定
-				.arr(col + 3) = getTotalLevel(st.totalScore)
+				.arr(col + 3) = tmp
 				' 附加分
 				.arr(col + 4) = st.totalJfScore / 100
+
+				各等级计数(计算等级(tmp)) += 1
 			Else
+				是否参测 = 0
 				.arr(col + 0) = "X"
 				.arr(col + 1) = "X"
 				.arr(col + 2) = "X"
 				.arr(col + 3) = "X"
 				.arr(col + 4) = "X"
+				' 不及格
+				各等级计数(3) += 1
 			End If
 			col = col + 5
 
@@ -1673,16 +1765,22 @@ rowComplete:
 			.arr(col) = st.weightStr
 			col = col + 1
 			If st.bmiValid Then
+				是否参测 = 1
+				tmp = getBmiLevel(st.bmiScore, st.bmiLow)
 				' 身高体重指数
 				.arr(col + 0) = st.bmi / 10
 				' 身高体重成绩
 				.arr(col + 1) = st.bmiScore
 				' 身高体重等级
-				.arr(col + 2) = getBmiLevel(st.bmiScore, st.bmiLow)
+				.arr(col + 2) = tmp
+				各身体形态计数(计算身体形态等级(tmp)) += 1
 			Else
+				缺项数量 += 1
 				.arr(col + 0) = "X"
 				.arr(col + 1) = "X"
 				.arr(col + 2) = "X"
+				' 低体重
+				各身体形态计数(1) += 1
 			End If
 			col = col + 3
 
@@ -1690,13 +1788,18 @@ rowComplete:
 			.arr(col) = st.fhlStr
 			col = col + 1
 			If st.fhlValid = 1 Then
+				是否参测 = 1
+				tmp = getFhlLevel(st.fhlScore)
 				' 肺活量得分
 				.arr(col + 0) = st.fhlScore
 				' 肺活量等级
-				.arr(col + 1) = getFhlLevel(st.fhlScore)
+				.arr(col + 1) = tmp
+				各身体机能计数(计算等级(tmp)) += 1
 			Else
+				缺项数量 += 1
 				.arr(col + 0) = "X"
 				.arr(col + 1) = "X"
+				各身体机能计数(3) += 1
 			End If
 			col = col + 2
 
@@ -1704,11 +1807,13 @@ rowComplete:
 			.arr(col) = st.m50Str
 			col = col + 1
 			If st.m50Valid = 1 Then
+				是否参测 = 1
 				' 50米跑得分
 				.arr(col + 0) = st.m50Score
 				' 50米跑等级
 				.arr(col + 1) = getM50Level(st.m50Score)
 			Else
+				缺项数量 += 1
 				.arr(col + 0) = "X"
 				.arr(col + 1) = "X"
 			End If
@@ -1718,11 +1823,13 @@ rowComplete:
 			.arr(col) = st.zwtStr
 			col = col + 1
 			If st.zwtValid = 1 Then
+				是否参测 = 1
 				' 坐位体前屈得分
 				.arr(col + 0) = st.zwtScore
 				' 坐位体前屈等级
 				.arr(col + 1) = getZwtLevel(st.zwtScore)
 			Else
+				缺项数量 += 1
 				.arr(col + 0) = "X"
 				.arr(col + 1) = "X"
 			End If
@@ -1731,12 +1838,15 @@ rowComplete:
 			If st.grade < 6 Then
 				' 一分钟跳绳成绩
 				.arr(col + 0) = st.tsStr
+				是否有跳绳 = 1
 				If st.tsValid = 1 Then
+					是否参测 = 1
 					' 一分钟跳绳得分
 					.arr(col + 1) = st.tsScore
 					' 一分钟跳绳等级
 					.arr(col + 2) = getTsLevel(st.tsScore)
 				Else
+					缺项数量 += 1
 					.arr(col + 1) = "X"
 					.arr(col + 2) = "X"
 				End If
@@ -1761,12 +1871,15 @@ rowComplete:
 			If has = 1 Then
 				' 一分钟仰卧起坐成绩
 				.arr(col + 0) = st.ywqz0Str
+				是否有仰卧起坐 = 1
 				If st.ywqzValid = 1 Then
+					是否参测 = 1
 					' 一分钟仰卧起坐得分
 					.arr(col + 1) = st.ywqzScore
 					' 一分钟仰卧起坐等级
 					.arr(col + 2) = getYwqzLevel(st.ywqzScore)
 				Else
+					缺项数量 += 1
 					.arr(col + 1) = "X"
 					.arr(col + 2) = "X"
 				End If
@@ -1783,12 +1896,15 @@ rowComplete:
 			If st.grade = 4 Or st.grade = 5 Then
 				' 50米×8往返跑成绩
 				.arr(col + 0) = st.nlp0Str
+				是否有50x8 = 1
 				If st.nlpValid = 1 Then
+					是否参测 = 1
 					' 50米×8往返跑得分
 					.arr(col + 1) = st.nlpScore
 					' 50米×8往返跑等级
 					.arr(col + 2) = getNlpLevel(st.nlpScore)
 				Else
+					缺项数量 += 1
 					.arr(col + 1) = "X"
 					.arr(col + 2) = "X"
 				End If
@@ -1805,12 +1921,15 @@ rowComplete:
 			If st.grade >= 6 Then
 				' 立定跳远成绩
 				.arr(col + 0) = st.tyStr
+				是否有立定跳远 = 1
 				If st.tyValid = 1 Then
+					是否参测 = 1
 					' 立定跳远得分
 					.arr(col + 1) = st.tyScore
 					' 立定跳远等级
 					.arr(col + 2) = getTyLevel(st.tyScore)
 				Else
+					缺项数量 += 1
 					.arr(col + 1) = "X"
 					.arr(col + 2) = "X"
 				End If
@@ -1827,12 +1946,15 @@ rowComplete:
 			If st.grade >= 6 And st.gender <> 1 Then
 				' 800米跑成绩
 				.arr(col + 0) = st.nlp0Str
+				是否有800米 = 1
 				If st.nlpValid = 1 Then
+					是否参测 = 1
 					' 800米跑得分
 					.arr(col + 1) = st.nlpScore
 					' 800米跑等级
 					.arr(col + 2) = getNlpLevel(st.nlpScore)
 				Else
+					缺项数量 += 1
 					.arr(col + 1) = "X"
 					.arr(col + 2) = "X"
 				End If
@@ -1849,12 +1971,15 @@ rowComplete:
 			If st.grade >= 6 And st.gender = 1 Then
 				' 1000米跑成绩
 				.arr(col + 0) = st.nlp0Str
+				是否有1000米 = 1
 				If st.nlpValid = 1 Then
+					是否参测 = 1
 					' 1000米跑得分
 					.arr(col + 1) = st.nlpScore
 					' 1000米跑等级
 					.arr(col + 2) = getNlpLevel(st.nlpScore)
 				Else
+					缺项数量 += 1
 					.arr(col + 1) = "X"
 					.arr(col + 2) = "X"
 				End If
@@ -1871,12 +1996,15 @@ rowComplete:
 			If st.grade >= 6 And st.gender = 1 Then
 				' 引体向上成绩
 				.arr(col + 0) = st.ywqz0Str
+				是否有引体向上 = 1
 				If st.ywqzValid = 1 Then
+					是否参测 = 1
 					' 引体向上得分
 					.arr(col + 1) = st.ywqzScore
 					' 引体向上等级
 					.arr(col + 2) = getYwqzLevel(st.ywqzScore)
 				Else
+					缺项数量 += 1
 					.arr(col + 1) = "X"
 					.arr(col + 2) = "X"
 				End If
@@ -1889,6 +2017,74 @@ rowComplete:
 				.arr(col + 2) = ""
 			End If
 			col = col + 3
+
+			If 是否有跳绳 = 1 Then
+				.arr(col + 0) = "1"
+				.arr(col + 1) = st.tsJfScore
+			Else
+				.arr(col + 0) = "0"
+				.arr(col + 1) = "0"
+			End If
+			col += 2
+			If 是否有仰卧起坐 = 1 Then
+				.arr(col + 0) = "1"
+				.arr(col + 1) = st.ywqzJfScore
+			Else
+				.arr(col + 0) = "0"
+				.arr(col + 1) = "0"
+			End If
+			col += 2
+			If 是否有50x8 = 1 Then
+				.arr(col + 0) = "1"
+				.arr(col + 1) = st.nlpJfScore
+			Else
+				.arr(col + 0) = "0"
+				.arr(col + 1) = "0"
+			End If
+			col += 2
+			If 是否有立定跳远 = 1 Then
+				.arr(col + 0) = "1"
+				.arr(col + 1) = st.tyJfScore
+			Else
+				.arr(col + 0) = "0"
+				.arr(col + 1) = "0"
+			End If
+			col += 2
+			If 是否有800米 = 1 Then
+				.arr(col + 0) = "1"
+				.arr(col + 1) = st.nlpJfScore
+			Else
+				.arr(col + 0) = "0"
+				.arr(col + 1) = "0"
+			End If
+			col += 2
+			If 是否有1000米 = 1 Then
+				.arr(col + 0) = "1"
+				.arr(col + 1) = st.nlpJfScore
+			Else
+				.arr(col + 0) = "0"
+				.arr(col + 1) = "0"
+			End If
+			col += 2
+			If 是否有引体向上 = 1 Then
+				.arr(col + 0) = "1"
+				.arr(col + 1) = st.ywqzJfScore
+			Else
+				.arr(col + 0) = "0"
+				.arr(col + 1) = "0"
+			End If
+			col += 2
+
+			If 是否参测 = 0 Then
+				.arr(0) = "否"
+			Else
+				If 缺项数量 = 0 Then
+					.arr(0) = "是"
+				Else
+					.arr(0) = "缺项"
+				End If
+			End If
+			.arr(1) = 缺项数量
 		End With
 
 		excelWsDst.Range(excelWsDst.Cells(row, 1), excelWsDst.Cells(row, col)).Value2 = st.arr
@@ -1902,6 +2098,18 @@ rowComplete:
 			getGradeName = gradeNameTbl(grade)
 		Else
 			getGradeName = "未知"
+		End If
+	End Function
+
+	Function getStageName(ByVal grade As UInt32)
+		If grade < 6 Then
+			getStageName = "小学"
+		ElseIf grade < 9 Then
+			getStageName = "初中"
+		ElseIf grade < 12 Then
+			getStageName = "高中"
+		Else
+			getStageName = "未知"
 		End If
 	End Function
 
