@@ -5,7 +5,7 @@ Imports Microsoft.Office.Interop
 Public Class Form1
 	' 测试数据Excel信息
 
-	Dim 测项起始列号 As UInt32 = 21
+	Dim 测项起始列号 As UInt32 = 24
 
 	Dim 测项名称信息() As String = { _
 	  "50米跑（单位：秒）", _
@@ -266,8 +266,8 @@ retry:
 	Private Sub 计算类别()
 		Dim 年级 As String
 		Dim 性别 As String
-		年级 = excelWs.Range("E" & 当前行号).Text
-		性别 = excelWs.Range("G" & 当前行号).Text
+		年级 = excelWs.Range("H" & 当前行号).Text
+		性别 = excelWs.Range("J" & 当前行号).Text
 		Select Case 年级
 			Case "一年级", "二年级"
 				当前类别 = 0
@@ -435,7 +435,7 @@ out:
 					生成何种数据 = 0
 					Exit For
 				End If
-				If wkType = 1 And excelWs.Range("A1").Text = "ID" Then
+				If wkType = 1 And excelWs.Range("C1").Text = "ID" Then
 					生成何种数据 = 1
 					Exit For
 				End If
@@ -660,17 +660,17 @@ out:
 
 		logW("开始 - 打开报告")
 
-		docPath = Application.StartupPath & "\" & excelWs.Range("D" & 当前行号).Value2 & "\" & excelWs.Range("E" & 当前行号).Value2 & "\" & excelWs.Range("F" & 当前行号).Value2
+		docPath = Application.StartupPath & "\" & excelWs.Range("F" & 当前行号).Value2 & "\" & excelWs.Range("H" & 当前行号).Value2 & "\" & excelWs.Range("I" & 当前行号).Value2
 		If Not Directory.Exists(docPath) Then
-			docPath = Application.StartupPath & "\" & excelWs.Range("D" & 当前行号).Value2
+			docPath = Application.StartupPath & "\" & excelWs.Range("F" & 当前行号).Value2
 			If Not Directory.Exists(docPath) Then Directory.CreateDirectory(docPath)
-			docPath = docPath & "\" & excelWs.Range("E" & 当前行号).Value2
+			docPath = docPath & "\" & excelWs.Range("H" & 当前行号).Value2
 			If Not Directory.Exists(docPath) Then Directory.CreateDirectory(docPath)
-			docPath = docPath & "\" & excelWs.Range("F" & 当前行号).Value2
+			docPath = docPath & "\" & excelWs.Range("I" & 当前行号).Value2
 			If Not Directory.Exists(docPath) Then Directory.CreateDirectory(docPath)
 		End If
 		docFullName = docPath & "\" _
-		 & excelWs.Range("D" & 当前行号).Value2 & "_" & excelWs.Range("E" & 当前行号).Value2 & "_" & excelWs.Range("F" & 当前行号).Value2 & "_" & excelWs.Range("A" & 当前行号).Value2 & ".docx"
+		 & excelWs.Range("F" & 当前行号).Value2 & "_" & excelWs.Range("H" & 当前行号).Value2 & "_" & excelWs.Range("I" & 当前行号).Value2 & "_" & excelWs.Range("C" & 当前行号).Value2 & ".docx"
 
 		logW("打开报告模板")
 		wordDoc = wordApp.Documents.Add(Application.StartupPath & "\Tmpl.docx")
@@ -698,11 +698,11 @@ out:
 		logI("开始 - 生成首页")
 
 		' 学校名称
-		学校名称 = excelWs.Range("D" & 当前行号).Value2
+		学校名称 = excelWs.Range("F" & 当前行号).Value2
 		' 年级班级
-		年级班级 = excelWs.Range("F" & 当前行号).Value2
+		年级班级 = excelWs.Range("H" & 当前行号).Value2
 		' 学生姓名
-		学生姓名 = excelWs.Range("C" & 当前行号).Value2
+		学生姓名 = excelWs.Range("E" & 当前行号).Value2
 
 		' 学校名称
 		wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(2).Range.Text = 学校名称
@@ -724,25 +724,25 @@ out:
 		logI("开始 - 生成学生情况")
 
 		' 姓名
-		wordDoc.Tables(1).Cell(1, 2).Range.Text = excelWs.Range("C" & 当前行号).Text
+		wordDoc.Tables(1).Cell(1, 2).Range.Text = excelWs.Range("E" & 当前行号).Text
 		' 学生识别号
-		wordDoc.Tables(1).Cell(1, 4).Range.Text = excelWs.Range("A" & 当前行号).Text
+		wordDoc.Tables(1).Cell(1, 4).Range.Text = excelWs.Range("C" & 当前行号).Text
 		' 性别
-		wordDoc.Tables(1).Cell(1, 6).Range.Text = excelWs.Range("G" & 当前行号).Text
+		wordDoc.Tables(1).Cell(1, 6).Range.Text = excelWs.Range("J" & 当前行号).Text
 		' 年级
-		wordDoc.Tables(1).Cell(2, 2).Range.Text = excelWs.Range("E" & 当前行号).Text
+		wordDoc.Tables(1).Cell(2, 2).Range.Text = excelWs.Range("H" & 当前行号).Text
 		' 班级
-		wordDoc.Tables(1).Cell(2, 4).Range.Text = excelWs.Range("F" & 当前行号).Text
+		wordDoc.Tables(1).Cell(2, 4).Range.Text = excelWs.Range("I" & 当前行号).Text
 		' 测试成绩
-		wordDoc.Tables(1).Cell(2, 6).Range.Text = excelWs.Range("J" & 当前行号).Text
+		wordDoc.Tables(1).Cell(2, 6).Range.Text = excelWs.Range("M" & 当前行号).Text
 		' 测试等级
-		wordDoc.Tables(1).Cell(3, 2).Range.Text = excelWs.Range("K" & 当前行号).Text
+		wordDoc.Tables(1).Cell(3, 2).Range.Text = excelWs.Range("N" & 当前行号).Text
 		' 综合成绩
-		wordDoc.Tables(1).Cell(3, 4).Range.Text = excelWs.Range("H" & 当前行号).Text
+		wordDoc.Tables(1).Cell(3, 4).Range.Text = excelWs.Range("K" & 当前行号).Text
 		' 综合等级
-		wordDoc.Tables(1).Cell(3, 6).Range.Text = excelWs.Range("I" & 当前行号).Text
+		wordDoc.Tables(1).Cell(3, 6).Range.Text = excelWs.Range("L" & 当前行号).Text
 		' 所在学校
-		wordDoc.Tables(1).Cell(4, 2).Range.Text = excelWs.Range("D" & 当前行号).Text
+		wordDoc.Tables(1).Cell(4, 2).Range.Text = excelWs.Range("F" & 当前行号).Text
 
 		logI("结束 - 生成学生情况")
 
@@ -759,23 +759,23 @@ out:
 		logI("开始 - 生成单项指标")
 
 		' 身体形态
-		内容 = excelWs.Range("O" & 当前行号).Text
+		内容 = excelWs.Range("R" & 当前行号).Text
 		If 内容 = "X" Then 内容 = ""
 		wordDoc.Tables(表格位置).Cell(2, 2).Range.Text = 内容
-		内容 = excelWs.Range("P" & 当前行号).Text
+		内容 = excelWs.Range("S" & 当前行号).Text
 		If 内容 = "X" Then 内容 = ""
 		wordDoc.Tables(表格位置).Cell(2, 3).Range.Text = 内容
-		内容 = excelWs.Range("Q" & 当前行号).Text
+		内容 = excelWs.Range("T" & 当前行号).Text
 		If 内容 = "X" Then 内容 = ""
 		wordDoc.Tables(表格位置).Cell(2, 4).Range.Text = 内容
 		' 身体机能
-		内容 = excelWs.Range("R" & 当前行号).Text
+		内容 = excelWs.Range("U" & 当前行号).Text
 		If 内容 = "X" Then 内容 = ""
 		wordDoc.Tables(表格位置).Cell(3, 2).Range.Text = 内容
-		内容 = excelWs.Range("S" & 当前行号).Text
+		内容 = excelWs.Range("V" & 当前行号).Text
 		If 内容 = "X" Then 内容 = ""
 		wordDoc.Tables(表格位置).Cell(3, 3).Range.Text = 内容
-		内容 = excelWs.Range("T" & 当前行号).Text
+		内容 = excelWs.Range("W" & 当前行号).Text
 		If 内容 = "X" Then 内容 = ""
 		wordDoc.Tables(表格位置).Cell(3, 4).Range.Text = 内容
 
@@ -818,8 +818,8 @@ out:
 		Try
 			图表工作表 = excelWbTmpl.Sheets(工作表名称信息(当前类别) & "图表")
 			图表工作表.Activate()
-			图表工作表.Cells(1, 2).Value2 = excelWs.Range("P" & 当前行号).Text
-			图表工作表.Cells(2, 2).Value2 = excelWs.Range("S" & 当前行号).Text
+			图表工作表.Cells(1, 2).Value2 = excelWs.Range("S" & 当前行号).Text
+			图表工作表.Cells(2, 2).Value2 = excelWs.Range("V" & 当前行号).Text
 
 			' 动态项
 			idx = 当前类别 * 6
@@ -852,7 +852,7 @@ out:
 	' 10000 倍
 	Function 转换百分比(ByVal 数值 As UInt32)
 		If 数值 = 0 Then
-			转换百分比 = ""
+			转换百分比 = "0"
 		ElseIf 数值 < 10 Then
 			转换百分比 = "0.0" & 数值
 		ElseIf 数值 < 100 Then
@@ -863,16 +863,38 @@ out:
 		logI("转换百分比: " & 数值 & " > " & 转换百分比)
 	End Function
 
+	Function 格式化百分比(ByVal 百分比 As String)
+		Dim idx As Int32
+
+		idx = Strings.InStr(百分比, ".")
+		If idx = 0 Then
+			格式化百分比 = 百分比 & ".00"
+		Else
+			idx = 百分比.Length - idx
+			If idx = 0 Then
+				格式化百分比 = 百分比 & "00"
+			ElseIf idx = 1 Then
+				格式化百分比 = 百分比 & "0"
+			Else
+				格式化百分比 = 百分比
+			End If
+		End If
+	End Function
+
 	Function 生成学校整体情况()
 		logI("开始 - 生成学校整体情况")
 
 		Dim 表格位置 As UInt32 = 3
+		Dim col As UInt32
 		Dim i As UInt32 = 0
 
+		' last col (0) -> Name (1) -> Count(2) -> Percent(3)
+		col = rptHdrTbl.Length + 3
+
 		For i = 0 To 3
-			wordDoc.Tables(表格位置).Cell(i + 2, 2).Range.Text = 转换百分比(各等级百分比(i))
-			wordDoc.Tables(表格位置).Cell(i + 2, 4).Range.Text = 转换百分比(各身体形态百分比(i))
-			wordDoc.Tables(表格位置).Cell(i + 2, 6).Range.Text = 转换百分比(各身体机能百分比(i))
+			wordDoc.Tables(表格位置).Cell(i + 2, 2).Range.Text = 格式化百分比(excelWs.Cells(i + 2, col).Value2)
+			wordDoc.Tables(表格位置).Cell(i + 2, 4).Range.Text = 格式化百分比(excelWs.Cells(i + 2, col + 3).Value2)
+			wordDoc.Tables(表格位置).Cell(i + 2, 6).Range.Text = 格式化百分比(excelWs.Cells(i + 2, col + 6).Value2)
 		Next
 
 		logI("结束- 生成学校整体情况")
@@ -909,7 +931,7 @@ out:
 		Dim 等级 As UInt32
 
 		' 学生评价等级的建议
-		等级 = 计算等级(excelWsTmpl.Range("I" & 当前行号).Text)
+		等级 = 计算等级(excelWs.Range("L" & 当前行号).Text)
 		logW("等级 " & 等级)
 		wordDoc.Application.Selection.Style = "主标题1"
 		wordDoc.Application.Selection.TypeText("（一）" & excelWsTmpl.Range("A1").Text)
@@ -919,7 +941,7 @@ out:
 		wordDoc.Application.Selection.TypeParagraph()
 
 		'评价 = excelWsTmpl.Range("Q" & 当前行号).Text
-		Select Case excelWs.Range("Q" & 当前行号).Text
+		Select Case excelWs.Range("T" & 当前行号).Text
 			Case "正常"
 				身高体重等级 = 0
 				等级 = 2
@@ -943,7 +965,7 @@ out:
 		wordDoc.Application.Selection.TypeParagraph()
 
 		' 学生肺活量的建议
-		等级 = 计算等级(excelWsTmpl.Range("T" & 当前行号).Text)
+		等级 = 计算等级(excelWs.Range("W" & 当前行号).Text)
 		wordDoc.Application.Selection.Style = "主标题1"
 		wordDoc.Application.Selection.TypeText("（三）" & excelWsTmpl.Range("A27").Text)
 		wordDoc.Application.Selection.TypeParagraph()
@@ -1405,7 +1427,7 @@ out:
 			If Not excelWsSrc.Range("B" & row).Text < 100 Then GoTo rowComplete
 			If Not excelWsSrc.Range("B" & row).Text > 10 Then GoTo rowComplete
 
-			logW(String.Format("生成第{0}行", row))
+			logI(String.Format("生成第{0}行", row))
 
 			initStudent(st)
 
