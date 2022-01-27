@@ -1891,7 +1891,7 @@ rowComplete:
 			col = col + 3
 		End With
 
-		excelWsDst.Range(excelWsDst.Cells(row, 1), excelWsDst.Cells(row, UBound(rptHdrTbl) + 1)).Value2 = st.arr
+		excelWsDst.Range(excelWsDst.Cells(row, 1), excelWsDst.Cells(row, col)).Value2 = st.arr
 	End Sub
 
 	Function getGradeName(ByVal grade As Long)
