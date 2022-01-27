@@ -73,7 +73,7 @@ Public Class Form1
 	Dim st As Student
 
 	' 资源信息
-
+	Dim wkType As Int32
 	Dim wk As Thread
 	Dim wkStart As UInt32
 	Dim wkDone As UInt32
@@ -336,18 +336,36 @@ out:
 	End Function
 
 	Private Sub 处理数据(ByRef 待处理文件 As String)
+		Dim 生成何种数据 As Int32 = -1
+
 		logI("开始 - 处理数据 " & 待处理文件)
 
 		Try
 			excelWb = excelApp.Workbooks.Open(待处理文件, Nothing, True)
-			excelWs = excelWb.Sheets(1)
+			excelWs = Nothing
+			For i = 1 To excelWb.Sheets.Count
+				excelWs = excelWb.Sheets(i)
+				If wkType = 0 And excelWs.Range("A1").Text = "学校名称" Then
+					生成何种数据 = 0
+					Exit For
+				End If
+				If wkType = 1 And excelWs.Range("A1").Text = "ID" Then
+					生成何种数据 = 1
+					Exit For
+				End If
+			Next
 		Catch e As Exception
 			logE(e.Message)
 			logE(e.StackTrace)
 			GoTo out
 		End Try
 
-		If excelWs.Range("A1").Text = "学校名称" Then
+		If 生成何种数据 = -1 Then
+			logE("没有找到可用的工作表: " & 待处理文件)
+			GoTo out
+		End If
+
+		If 生成何种数据 = 0 Then
 			Dim excelWbDst As Excel.Workbook
 			Try
 				excelWbDst = excelApp.Workbooks.Add()
@@ -374,12 +392,17 @@ out:
 			GoTo out
 		End If
 
+		For i = 1 To 10
+			logE("A" & i & " " & excelWs.Range("A" & i).Text)
+		Next
+		For i = 1 To 10
+			logE("B" & i & " " & excelWs.Range("B" & i).Text)
+		Next
 
-		If excelWs.Range("A1").Text <> "ID" Then
-			logE("不识别的待处理文件:" & 待处理文件)
-			'MsgBox("不识别的待处理文件:" & 待处理文件)
-			GoTo out
-		End If
+		'If excelWs.Range("A1").Text <> "ID" Then
+		'	logE("不识别的待处理文件:" & 待处理文件)
+		'	GoTo out
+		'End If
 
 		If excelWbTmpl Is Nothing Then
 			Try
@@ -434,8 +457,8 @@ out:
 		logI("结束 - 处理数据 " & 待处理文件)
 	End Sub
 
-	Private Sub 处理事件()
-		logI("开始 - 处理事件")
+	Private Sub 生成()
+		logI("开始 - 生成")
 
 		logW("待处理文件列表: " & String.Join(",", 待处理文件列表))
 		If 待处理文件列表 Is Nothing Or 待处理文件列表.Length = 0 Then
@@ -479,13 +502,13 @@ out:
 
 out:
 		卸载应用()
-		logI("结束 - 处理事件")
+		logI("结束 - 生成")
 		logFlush()
 	End Sub
 
 	Private Sub Worker()
 		Try
-			处理事件()
+			生成()
 		Catch ex As Exception
 			logE(ex.Message)
 			logE(ex.StackTrace)
@@ -494,7 +517,7 @@ out:
 		Thread.VolatileWrite(wkDone, 1)
 	End Sub
 
-	Private Sub Button1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button1.Click
+	Private Sub 点击事件(ByVal 类别 As Int32)
 		If Thread.VolatileRead(wkStart) Then
 			If Thread.VolatileRead(wkDone) = 0 Then
 				MsgBox("正在处理中 ...")
@@ -526,6 +549,7 @@ out:
 		Thread.VolatileWrite(wkExiting, 0)
 		Thread.VolatileWrite(wkDone, 0)
 		wk = New Thread(AddressOf Worker)
+		wkType = 类别
 		wk.Start()
 		Thread.VolatileWrite(wkStart, 1)
 
@@ -533,8 +557,16 @@ out:
 		logI("结束 - 处理点击事件")
 	End Sub
 
+	Private Sub Button1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button1.Click
+		点击事件(0)
+	End Sub
+
 	Private Sub Button2_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button2.Click
 		cancelReport(0)
+	End Sub
+
+	Private Sub Button3_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button3.Click
+		点击事件(1)
 	End Sub
 
 	Function 打开报告()
@@ -1425,7 +1457,7 @@ rowComplete:
 			st.classStr = excelWsSrc.Range("D" & row).Text
 			st.nameStr = excelWsSrc.Range("G" & row).Text
 			st.genderStr = excelWsSrc.Range("H" & row).Text
-			st.gender = excelWsSrc.Range("H" & row).Text
+			st.gender = excelWsSrc.Range("H" & row).Value2
 			st.gradeStr = excelWsSrc.Range("B" & row).Text
 			st.heightStr = excelWsSrc.Range("M" & row).Text
 			st.weightStr = excelWsSrc.Range("N" & row).Text
