@@ -8,27 +8,27 @@ Public Class Form1
 	Dim 测项起始列号 As UInt32 = 21
 
 	Dim 测项名称信息() As String = { _
-   "50米跑（单位：秒）", _
-   "坐位体前屈（单位：厘米）", _
-   "一分钟跳绳（单位：次）", _
-   "一分钟仰卧起坐（单位：次）", _
-   "50米×8往返跑（单位：秒）", _
-   "立定跳远（单位：厘米）", _
-   "800米跑（单位：秒）", _
-   "1000米跑（单位：秒）", _
-   "引体向上（单位：次）"}
+	  "50米跑（单位：秒）", _
+	  "坐位体前屈（单位：厘米）", _
+	  "一分钟跳绳（单位：次）", _
+	  "一分钟仰卧起坐（单位：次）", _
+	  "50米×8往返跑（单位：秒）", _
+	  "立定跳远（单位：厘米）", _
+	  "800米跑（单位：秒）", _
+	  "1000米跑（单位：秒）", _
+	  "引体向上（单位：次）"}
 
 	' Excel模板信息
 
 	Dim 工作表名称信息() As String = { _
-   "1112", _
-   "1314", _
-   "1516女", _
-   "1516男", _
-   "212223女", _
-   "212223男", _
-   "313233女", _
-   "313233男"}
+	  "1112", _
+	  "1314", _
+	  "1516女", _
+	  "1516男", _
+	  "212223女", _
+	  "212223男", _
+	  "313233女", _
+	  "313233男"}
 
 	Dim 学生评价等级的建议起始行号 As UInt32 = 2
 
@@ -45,14 +45,14 @@ Public Class Form1
 	' 单项指标
 	' 学生身体素质测试结果的建议
 	Dim 学生测试项信息() As UInt32 = { _
-   3, 0, 1, 2, 0, 0, _
-   4, 0, 1, 3, 2, 0, _
-   5, 0, 1, 3, 2, 4, _
-   5, 0, 1, 3, 2, 4, _
-   5, 0, 1, 3, 5, 6, _
-   5, 0, 1, 8, 5, 7, _
-   5, 0, 1, 3, 5, 6, _
-   5, 0, 1, 8, 5, 7}
+	  3, 0, 1, 2, 0, 0, _
+	  4, 0, 1, 3, 2, 0, _
+	  5, 0, 1, 3, 2, 4, _
+	  5, 0, 1, 3, 2, 4, _
+	  5, 0, 1, 3, 5, 6, _
+	  5, 0, 1, 8, 5, 7, _
+	  5, 0, 1, 3, 5, 6, _
+	  5, 0, 1, 8, 5, 7}
 
 	' 当前信息
 
@@ -90,6 +90,8 @@ Public Class Form1
 	Dim excelWb As Excel.Workbook
 	Dim excelWs As Excel.Worksheet
 
+	Dim asyncResultList As List(Of IAsyncResult) = New List(Of IAsyncResult)
+
 	' 配置
 	Dim displayExcel As Boolean = False
 	Dim displayWord As Boolean = False
@@ -121,24 +123,77 @@ Public Class Form1
 		End If
 	End Sub
 
-	Private Delegate Sub logToUIDelegate(ByRef msg As String)
+	Private Delegate Sub logToUIDelegate(ByRef msgEntity As MsgEntity)
 	Dim dlgt As New logToUIDelegate(AddressOf logtoUI)
 
-	Private sb As System.Text.StringBuilder = New System.Text.StringBuilder
+	'Private sb As System.Text.StringBuilder = New System.Text.StringBuilder
 
-	Sub logtoUI(ByRef msg As String)
+	Sub logtoUI(ByRef msgEntity As MsgEntity)
+		If msgEntity.type = MsgType.mtNormal Then
+			RichTextBox1.Text = msgEntity.data & Chr(13) & Chr(10) & RichTextBox1.Text
+		ElseIf msgEntity.type = MsgType.mtProgress Then
+			Label1.Text = msgEntity.data
+		Else
+		End If
+
 		'RichTextBox1.Text = msg & Chr(13) & Chr(10) & RichTextBox1.Text
-		sb.AppendLine(msg)
-		RichTextBox1.Text = sb.ToString
-		RichTextBox1.SelectionStart = RichTextBox1.Text.Length
-		RichTextBox1.ScrollToCaret()
+
+		'sb.AppendLine(msg)
+		'RichTextBox1.Text = sb.ToString
+		'RichTextBox1.SelectionStart = RichTextBox1.Text.Length
+		'RichTextBox1.ScrollToCaret()
+	End Sub
+
+	Sub purgeAsync()
+		Dim res As IAsyncResult
+		Dim cnt As UInt32 = 0
+
+retry:
+		res = Nothing
+		SyncLock asyncResultList
+			If asyncResultList.Count <> 0 Then
+				If asyncResultList(0).IsCompleted Then
+					res = asyncResultList(0)
+					asyncResultList.RemoveAt(0)
+				End If
+			End If
+		End SyncLock
+
+		If Not res Is Nothing Then
+			EndInvoke(res)
+			cnt += 1
+			GoTo retry
+		End If
+
+		'Debug.Print("Purge " & cnt)
+	End Sub
+
+	Sub sendInternal(ByVal type As MsgType, ByRef msg As String)
+		Dim res As IAsyncResult
+		Dim msgEntity As MsgEntity
+
+		msgEntity = New MsgEntity()
+		msgEntity.type = type
+		msgEntity.data = msg
+		res = Me.BeginInvoke(dlgt, msgEntity)
+		SyncLock asyncResultList
+			asyncResultList.Add(res)
+		End SyncLock
+	End Sub
+
+	Sub sendMsg(ByRef msg As String)
+		sendInternal(MsgType.mtNormal, msg)
+	End Sub
+
+	Sub sendProgress(ByRef msg As String)
+		sendInternal(MsgType.mtProgress, msg)
 	End Sub
 
 	Protected Sub log(ByVal tag As String, ByVal msg As String)
-		Dim m As String
-		m = String.Format("[{0}] {1} {2}", Now, tag, msg)
-		If tag <> "信息" Then RichTextBox1.BeginInvoke(dlgt, m)
-		If Not logger Is Nothing Then logger.WriteLine(m)
+		Dim fmtMsg As String
+		fmtMsg = String.Format("[{0}] {1} {2}", Now, tag, msg)
+		If tag <> "信息" Then sendMsg(fmtMsg)
+		If Not logger Is Nothing Then logger.WriteLine(fmtMsg)
 	End Sub
 
 	Protected Sub logFlush()
@@ -155,7 +210,7 @@ Public Class Form1
 
 	Protected Sub logE(ByVal msg As String)
 		log("错误", msg)
-		logflush()
+		logFlush()
 	End Sub
 
 	Protected Sub logF(ByVal msg As String)
@@ -335,7 +390,7 @@ out:
 		计算学校整体情况 = 0
 	End Function
 
-	Private Sub 处理数据(ByRef 待处理文件 As String)
+	Private Sub 处理数据(ByVal 共几个文件 As UInt32, ByVal 第几个文件 As UInt32, ByRef 待处理文件 As String)
 		Dim 生成何种数据 As Int32 = -1
 
 		logI("开始 - 处理数据 " & 待处理文件)
@@ -379,7 +434,7 @@ out:
 			End Try
 			Try
 				' Entry
-				start(excelWs, excelWbDst.Sheets(1))
+				start(共几个文件, 第几个文件, excelWs, excelWbDst.Sheets(1))
 			Catch e As Exception
 				logE("处理Excel数据: " & e.Message)
 				logE("处理Excel数据: " & e.StackTrace)
@@ -391,13 +446,6 @@ out:
 			excelWbDst = Nothing
 			GoTo out
 		End If
-
-		For i = 1 To 10
-			logE("A" & i & " " & excelWs.Range("A" & i).Text)
-		Next
-		For i = 1 To 10
-			logE("B" & i & " " & excelWs.Range("B" & i).Text)
-		Next
 
 		'If excelWs.Range("A1").Text <> "ID" Then
 		'	logE("不识别的待处理文件:" & 待处理文件)
@@ -420,9 +468,9 @@ out:
 
 			当前行号 = 2
 			Do While True
-				logW("当前行号 " & 当前行号)
+				'If excelWs.Range("B" & 当前行号).Text = "" Then Exit Do
 
-				If excelWs.Range("B" & 当前行号).Text = "" Then Exit Do
+				logW("当前行号 " & 当前行号)
 
 				计算类别()
 
@@ -433,6 +481,10 @@ out:
 				关闭报告()
 
 				当前行号 = 当前行号 + 1
+
+				sendProgress(String.Format("共{0}个文件。当前处理第{1}个文件的第{2}行", 共几个文件, 第几个文件, 当前行号))
+
+				purgeAsync()
 
 				If wkExiting Then Exit Do
 
@@ -477,7 +529,7 @@ out:
 			For i = 0 To 待处理文件列表.Length - 1
 				logW("开始 - 处理: " & 待处理文件列表(i))
 				' 处理一个Excel
-				处理数据(待处理文件列表(i))
+				处理数据(待处理文件列表.Length, i + 1, 待处理文件列表(i))
 				logW("结束 - 处理: " & 待处理文件列表(i))
 				logFlush()
 				If wkExiting Then Exit For
@@ -545,6 +597,8 @@ out:
 			logW("没有待处理文件列表")
 			GoTo out
 		End If
+
+		Label1.Text = ""
 
 		Thread.VolatileWrite(wkExiting, 0)
 		Thread.VolatileWrite(wkDone, 0)
@@ -1273,7 +1327,7 @@ out:
 	  20, 159, 155, 335, 330, 325, 320, 318, 316, 314, 312, _
 	  10, 163, 159, 345, 340, 335, 330, 328, 326, 324, 322}
 
-	Sub start(ByRef excelWsSrc As Excel.Worksheet, ByRef excelWsDst As Excel.Worksheet)
+	Sub start(ByVal 共几个文件 As UInt32, ByVal 第几个文件 As UInt32, ByRef excelWsSrc As Excel.Worksheet, ByRef excelWsDst As Excel.Worksheet)
 		Dim row As Long
 		'Dim offset As Long
 
@@ -1296,14 +1350,14 @@ out:
 
 		row = 2
 		Do While True
-			logW(String.Format("生成第{0}行", row))
-
 			' end of data
 			If excelWsSrc.Range("A" & row).Text = "" Then Exit Do
 
 			' invalid grade
 			If Not excelWsSrc.Range("B" & row).Text < 100 Then GoTo rowComplete
 			If Not excelWsSrc.Range("B" & row).Text > 10 Then GoTo rowComplete
+
+			logW(String.Format("生成第{0}行", row))
 
 			initStudent(st)
 
@@ -1319,6 +1373,10 @@ out:
 			calcStudentScore(st)
 
 			createStudentReport(excelWsSrc, row, st, excelWsDst)
+
+			sendProgress(String.Format("共{0}个文件。当前处理第{1}个文件的第{2}行", 共几个文件, 第几个文件, row))
+
+			purgeAsync()
 
 			If wkExiting Then Exit Do
 
@@ -1405,6 +1463,10 @@ rowComplete:
 		st.totalValid = 0
 		st.totalScore = 0
 		st.totalJfScore = 0
+
+		For i = 0 To UBound(rptHdrTbl)
+			st.arr(i) = ""
+		Next
 	End Sub
 
 	Function timeToSeconds(ByVal t As String)
@@ -1547,9 +1609,10 @@ rowComplete:
 	End Sub
 
 	Sub createStudentReportHeader(ByRef excelWsDst As Excel.Worksheet)
-		For i = 1 To UBound(rptHdrTbl)
-			excelWsDst.Cells(1, i).Value2 = rptHdrTbl(i)
-		Next
+		'For i = 1 To UBound(rptHdrTbl)
+		'	excelWsDst.Cells(1, i).Value2 = rptHdrTbl(i)
+		'Next
+		excelWsDst.Range(excelWsDst.Cells(1, 1), excelWsDst.Cells(1, UBound(rptHdrTbl) + 1)).Value2 = rptHdrTbl
 	End Sub
 
 	Sub createStudentReport(ByRef excelWsSrc As Excel.Worksheet, ByVal row As Long, ByRef st As Student, ByRef excelWsDst As Excel.Worksheet)
@@ -1827,13 +1890,8 @@ rowComplete:
 			End If
 			col = col + 3
 		End With
-		Exit Sub
-		'excelWsDst.Cells(1, col) = st.arr
-		Dim i As UInt32
-		For i = 1 To UBound(st.arr)
-			excelWsDst.Cells(row, i).value2 = st.arr(i)
-		Next
-		'ActiveCell.offset(offset, 0).Resize(1, col) = st.arr
+
+		excelWsDst.Range(excelWsDst.Cells(row, 1), excelWsDst.Cells(row, UBound(rptHdrTbl) + 1)).Value2 = st.arr
 	End Sub
 
 	Function getGradeName(ByVal grade As Long)
@@ -2412,4 +2470,14 @@ Public Class Student
 
 	' 存储报表数据
 	Public arr() As Object
+End Class
+
+Public Enum MsgType
+	mtNormal
+	mtProgress
+End Enum
+
+Public Class MsgEntity
+	Public type As MsgType
+	Public data As Object
 End Class
