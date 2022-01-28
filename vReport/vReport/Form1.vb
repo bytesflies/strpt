@@ -752,7 +752,9 @@ out:
 	Function 生成单项指标()
 		Dim 表格位置 As UInt32 = 2
 		Dim 测项序号 As UInt32 = 0
+		Dim 表格行 As UInt32 = 0
 		Dim 内容 As String
+		Dim first As UInt32
 		Dim idx As UInt32 = 0
 		Dim i As UInt32 = 0
 
@@ -782,23 +784,60 @@ out:
 		' 动态项
 		idx = 当前类别 * 6
 		For i = 1 To 学生测试项信息(idx)
-			wordDoc.Tables(表格位置).Rows.Add()
+			' 在加分指标前面加一行
+			If i <> 学生测试项信息(idx) Then
+				wordDoc.Tables(表格位置).Rows.Add(wordDoc.Tables(表格位置).Rows(wordDoc.Tables(表格位置).Rows.Count - 2))
+			End If
 			测项序号 = 学生测试项信息(idx + i)
+
 			内容 = 测项名称信息(测项序号)
 			logW(i & " " & idx & " 测项 " & 测项序号 & " " & 内容)
 			wordDoc.Tables(表格位置).Cell(3 + i, 1).Range.Text = 内容
+
 			内容 = excelWs.Cells(当前行号, 测项起始列号 + 3 * 测项序号 + 0).Text
 			If 内容 = "X" Then 内容 = ""
-			wordDoc.Tables(表格位置).Cell(3 + i, 2).Range.Text = 内容
 			logW(内容)
+			wordDoc.Tables(表格位置).Cell(3 + i, 2).Range.Text = 内容
+
 			内容 = excelWs.Cells(当前行号, 测项起始列号 + 3 * 测项序号 + 1).Text
 			If 内容 = "X" Then 内容 = ""
 			logW(内容)
 			wordDoc.Tables(表格位置).Cell(3 + i, 3).Range.Text = 内容
+
 			内容 = excelWs.Cells(当前行号, 测项起始列号 + 3 * 测项序号 + 2).Text
 			If 内容 = "X" Then 内容 = ""
 			logW(内容)
 			wordDoc.Tables(表格位置).Cell(3 + i, 4).Range.Text = 内容
+		Next
+
+		first = 0
+		idx = 当前类别 * 6
+		For i = 1 To 学生测试项信息(idx)
+			测项序号 = 学生测试项信息(idx + i)
+
+			If excelWs.Cells(当前行号, 测项起始列号 + 27 + 2 * 测项序号 + 0).Text() = "0" Then
+				Continue For
+			End If
+
+			If first = 0 Then
+				first = 1
+			Else
+				wordDoc.Tables(表格位置).Rows.Add()
+			End If
+
+			内容 = 测项名称信息(测项序号)
+			logW(i & " " & idx & " 测项 " & 测项序号 & " " & 内容)
+			wordDoc.Tables(表格位置).Rows.Last.Cells(1).Range.Text = 内容
+
+			'内容 = excelWs.Cells(当前行号, 测项起始列号 + 3 * 测项序号 + 0).Text
+			'If 内容 = "X" Then 内容 = ""
+			'logW(内容)
+			wordDoc.Tables(表格位置).Rows.Last.Cells(2).Range.Text = "/"
+
+			内容 = excelWs.Cells(当前行号, 测项起始列号 + 27 + 2 * 测项序号 + 1).Text
+			If 内容 = "X" Or 内容 = "/" Or 内容 = "0" Or 内容 = "" Then 内容 = "/"
+			logW(内容)
+			wordDoc.Tables(表格位置).Rows.Last.Cells(3).Range.Text = 内容
 		Next
 
 		logI("结束 - 生成单项指标")
@@ -986,7 +1025,7 @@ out:
 		wordDoc.Application.Selection.TypeParagraph()
 		For i = 0 To 整体运动建议信息(当前类别) - 1
 			wordDoc.Application.Selection.Style = "主标题2"
-			wordDoc.Application.Selection.TypeText(i + 1 & "." & excelWsTmpl.Range("A" & (40 + 1 + i * 3)).Text)
+			wordDoc.Application.Selection.TypeText(i + 1 & ". " & excelWsTmpl.Range("A" & (40 + 1 + i * 3)).Text)
 			wordDoc.Application.Selection.TypeParagraph()
 			wordDoc.Application.Selection.Style = "正文1"
 			wordDoc.Application.Selection.TypeText(excelWsTmpl.Range("E" & (40 + 1 + i * 3)).Text)
