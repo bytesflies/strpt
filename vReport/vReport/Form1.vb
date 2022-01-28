@@ -628,6 +628,40 @@ out:
 		Thread.VolatileWrite(wkDone, 1)
 	End Sub
 
+	Private Sub 读配置文件()
+		Dim sr As StreamReader = Nothing
+		Dim s As String
+		Dim m As Int32
+
+		学校转学区表.Clear()
+
+		Try
+			sr = New StreamReader("vReport.txt", True)
+
+			m = 1
+			While True
+				s = sr.ReadLine()
+				If s Is Nothing Then Exit While
+				Dim a As String() = s.Split(" ")
+				If a.Length = 0 Then
+					m = 0
+					Continue While
+				End If
+				If a(0) = "区" Then
+					m = 1
+					Continue While
+				End If
+				If m = 1 And a.Length = 2 Then
+					If Not 学校转学区表.ContainsKey(a(1)) Then 学校转学区表(a(1)) = a(0)
+				End If
+			End While
+		Catch ex As Exception
+			logE("打开配置文件vReport.txt失败")
+		Finally
+			If Not sr Is Nothing Then sr.Close()
+		End Try
+	End Sub
+
 	Private Sub 点击事件(ByVal 类别 As Int32)
 		Dim i As UInt32
 
@@ -661,6 +695,8 @@ out:
 		For i = 0 To 待处理文件列表.Length - 1
 			logR("第" & (i + 1) & "个待处理文件 " & 待处理文件列表(i))
 		Next
+
+		If 类别 = 0 Then 读配置文件()
 
 		Label1.Text = ""
 
@@ -1864,8 +1900,12 @@ rowComplete:
 			' ID
 			.arr(col) = st.idStr
 			col = col + 1
-			' 所属区 TODO
-			.arr(col) = ""
+			' 所属区
+			If 学校转学区表.ContainsKey(st.schoolStr) Then
+				.arr(col) = 学校转学区表(st.schoolStr)
+			Else
+				.arr(col) = ""
+			End If
 			col = col + 1
 			' 姓名
 			.arr(col) = st.nameStr
@@ -1873,7 +1913,7 @@ rowComplete:
 			' 学校
 			.arr(col) = st.schoolStr
 			col = col + 1
-			' 学段 TODO
+			' 学段
 			.arr(col) = getStageName(st.grade)
 			col = col + 1
 			' 年级
