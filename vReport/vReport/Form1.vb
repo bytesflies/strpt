@@ -98,9 +98,17 @@ Public Class Form1
 
 	Dim asyncResultList As List(Of IAsyncResult) = New List(Of IAsyncResult)
 
+	Dim 已经读取的行数 As UInt32
+	Const 最大缓存行数 As UInt32 = 32
+	Const 最大缓存列数 As UInt32 = 128
+	Dim 数据缓存(最大缓存行数 - 1)() As String
+
 	' 配置
 	Dim displayExcel As Boolean = False
 	Dim displayWord As Boolean = False
+
+	Dim 学校转学区表 As Dictionary(Of String, String)
+	Dim 列名转列号表 As Dictionary(Of String, UInt32)
 
 	' 日志
 	Dim logger As StreamWriter
@@ -274,8 +282,8 @@ retry:
 	Private Sub 计算类别()
 		Dim 年级 As String
 		Dim 性别 As String
-		年级 = excelWs.Range("H" & 当前行号).Text
-		性别 = excelWs.Range("J" & 当前行号).Text
+		年级 = 获取当前行数据("年级")
+		性别 = 获取当前行数据("性别")
 		Select Case 年级
 			Case "一年级", "二年级"
 				当前类别 = 0
@@ -300,7 +308,7 @@ retry:
 					当前类别 = 6
 				End If
 		End Select
-		logR("当前行: " & 当前行号 & " 年级: " & 年级 & " 性别: " & 性别 & " 计算类别: " & 当前类别)
+		'logR("当前行: " & 当前行号 & " 年级: " & 年级 & " 性别: " & 性别 & " 计算类别: " & 当前类别)
 	End Sub
 
 	Private Function 计算等级(ByVal 评价 As String)
@@ -316,7 +324,7 @@ retry:
 			Case Else
 				计算等级 = 3
 		End Select
-		logI("评价: " & 计算等级)
+		'logI("评价: " & 计算等级)
 	End Function
 
 	Private Function 计算身体形态等级(ByVal 评价 As String)
@@ -332,7 +340,7 @@ retry:
 			Case Else
 				计算身体形态等级 = 1
 		End Select
-		logI("计算身体形态等级: " & 计算身体形态等级)
+		'logI("计算身体形态等级: " & 计算身体形态等级)
 	End Function
 
 	Private Function 计算百分比(ByRef 计数() As UInt32, ByRef 百分比() As UInt32)
@@ -351,7 +359,7 @@ retry:
 
 		If 总和 = 0 Then GoTo out
 
-		logI("计数(0): " & 计数(0))
+		'logI("计数(0): " & 计数(0))
 
 		百分比和 = 0
 		For i = 0 To 3
@@ -457,6 +465,7 @@ out:
 			GoTo out
 		End If
 
+		' 处理原始数据
 		If 生成何种数据 = 0 Then
 			Dim excelWbDst As Excel.Workbook
 			Try
@@ -481,13 +490,17 @@ out:
 			End Try
 			excelWbDst.Close(Excel.XlSaveAction.xlSaveChanges)
 			excelWbDst = Nothing
+
 			GoTo out
 		End If
 
-		'If excelWs.Range("A1").Text <> "ID" Then
-		'	logE("不识别的待处理文件:" & 待处理文件)
-		'	GoTo out
-		'End If
+		' 处理Exccel，生成报表
+
+		列名转列号表.Clear()
+		当前行号 = 1
+		已经读取的行数 = 0
+		预取数据到缓存(excelWs)
+		生成列信息表格()
 
 		If excelWbTmpl Is Nothing Then
 			Try
@@ -500,16 +513,8 @@ out:
 			End Try
 		End If
 
-		测项起始列号 = 0
-		测项附加分起始列号 = 0
-		For i = 0 To rptHdrTbl.Length - 1
-			If rptHdrTbl(i) = "50米跑成绩" Then
-				测项起始列号 = i + 1
-			End If
-			If rptHdrTbl(i) = "是否有50米跑" Then
-				测项附加分起始列号 = i + 1
-			End If
-		Next
+		测项起始列号 = 列名转列号表("50米跑成绩")
+		测项附加分起始列号 = 列名转列号表("是否有50米跑")
 
 		If 测项起始列号 = 0 Or 测项附加分起始列号 = 0 Then
 			logE("测项起始列号 " & 测项起始列号 & " 测项附加分起始列号 " & 测项附加分起始列号)
@@ -518,9 +523,11 @@ out:
 		Try
 			计算学校整体情况()
 
-			当前行号 = 2
 			Do While True
-				'If excelWs.Range("B" & 当前行号).Text = "" Then Exit Do
+				移动到下一行()
+				预取数据到缓存(excelWs)
+
+				logR("当前行: " & 当前行号 & " 姓名 " & 获取当前行数据("姓名") & " 年级: " & 获取当前行数据("年级") & " 性别: " & 获取当前行数据("性别"))
 
 				计算类别()
 
@@ -530,16 +537,11 @@ out:
 
 				关闭报告()
 
-				当前行号 = 当前行号 + 1
-
 				sendProgress(String.Format("共{0}个文件。当前处理第{1}个文件的第{2}行", 共几个文件, 第几个文件, 当前行号))
 
 				purgeAsync()
 
 				If wkExiting Then Exit Do
-
-				' Release版本2分钟处理42笔数据
-				'If 当前行号 > 10 Then Exit Do
 			Loop
 		Catch e As Exception
 			logE("处理数据:" & e.Message)
@@ -682,19 +684,19 @@ out:
 		Dim docFullName As String
 		Dim docPath As String
 
-		logW("开始 - 打开报告")
+		'logW("开始 - 打开报告")
 
-		docPath = Application.StartupPath & "\" & excelWs.Range("F" & 当前行号).Value2 & "\" & excelWs.Range("H" & 当前行号).Value2 & "\" & excelWs.Range("I" & 当前行号).Value2
+		docPath = Application.StartupPath & "\" & 获取当前行数据("学校") & "\" & 获取当前行数据("年级") & "\" & 获取当前行数据("班级")
 		If Not Directory.Exists(docPath) Then
-			docPath = Application.StartupPath & "\" & excelWs.Range("F" & 当前行号).Value2
+			docPath = Application.StartupPath & "\" & 获取当前行数据("学校")
 			If Not Directory.Exists(docPath) Then Directory.CreateDirectory(docPath)
-			docPath = docPath & "\" & excelWs.Range("H" & 当前行号).Value2
+			docPath = docPath & "\" & 获取当前行数据("年级")
 			If Not Directory.Exists(docPath) Then Directory.CreateDirectory(docPath)
-			docPath = docPath & "\" & excelWs.Range("I" & 当前行号).Value2
+			docPath = docPath & "\" & 获取当前行数据("班级")
 			If Not Directory.Exists(docPath) Then Directory.CreateDirectory(docPath)
 		End If
 		docFullName = docPath & "\" _
-		 & excelWs.Range("F" & 当前行号).Value2 & "_" & excelWs.Range("H" & 当前行号).Value2 & "_" & excelWs.Range("I" & 当前行号).Value2 & "_" & excelWs.Range("C" & 当前行号).Value2 & ".docx"
+		 & 获取当前行数据("学校") & "_" & 获取当前行数据("年级") & "_" & 获取当前行数据("班级") & "_" & 获取当前行数据("ID") & ".docx"
 
 		logW("打开报告模板")
 		wordDoc = wordApp.Documents.Add(Application.StartupPath & "\Tmpl.docx")
@@ -702,31 +704,31 @@ out:
 		wordDoc.SaveAs(docFullName)
 		If displayWord Then wordDoc.Application.Activate()
 
-		logW("结束 - 打开报告")
+		'logW("结束 - 打开报告")
 
 		打开报告 = 0
 	End Function
 
 	Function 关闭报告()
-		logW("开始 - 关闭报告")
+		'logW("开始 - 关闭报告")
 
 		wordDoc.Close(Word.WdSaveOptions.wdSaveChanges)
 		wordDoc = Nothing
 
-		logW("结束 - 关闭报告")
+		'logW("结束 - 关闭报告")
 
 		关闭报告 = 0
 	End Function
 
 	Function 生成首页()
-		logI("开始 - 生成首页")
+		'logI("开始 - 生成首页")
 
 		' 学校名称
-		学校名称 = excelWs.Range("F" & 当前行号).Value2
+		学校名称 = 获取当前行数据("学校")
 		' 年级班级
-		年级班级 = excelWs.Range("H" & 当前行号).Value2
+		年级班级 = 获取当前行数据("年级")
 		' 学生姓名
-		学生姓名 = excelWs.Range("E" & 当前行号).Value2
+		学生姓名 = 获取当前行数据("姓名")
 
 		' 学校名称
 		wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(2).Range.Text = 学校名称
@@ -735,38 +737,28 @@ out:
 		' 学生姓名
 		wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(8).Range.Text = 学生姓名
 
-		logR("学校名称 " & 学校名称 & " 年级班级 " & 年级班级 & " 学生姓名 " & 学生姓名)
+		'logR("学校名称 " & 学校名称 & " 年级班级 " & 年级班级 & " 学生姓名 " & 学生姓名)
 
-		logI("结束 - 生成首页")
+		'logI("结束 - 生成首页")
 
 		生成首页 = 0
 	End Function
 
 	Function 生成学生情况()
-		logI("开始 - 生成学生情况")
+		'logI("开始 - 生成学生情况")
 
-		' 姓名
-		wordDoc.Tables(1).Cell(1, 2).Range.Text = excelWs.Range("E" & 当前行号).Text
-		' 学生识别号
-		wordDoc.Tables(1).Cell(1, 4).Range.Text = excelWs.Range("C" & 当前行号).Text
-		' 性别
-		wordDoc.Tables(1).Cell(1, 6).Range.Text = excelWs.Range("J" & 当前行号).Text
-		' 年级
-		wordDoc.Tables(1).Cell(2, 2).Range.Text = excelWs.Range("H" & 当前行号).Text
-		' 班级
-		wordDoc.Tables(1).Cell(2, 4).Range.Text = excelWs.Range("I" & 当前行号).Text
-		' 测试成绩
-		wordDoc.Tables(1).Cell(2, 6).Range.Text = excelWs.Range("M" & 当前行号).Text
-		' 测试等级
-		wordDoc.Tables(1).Cell(3, 2).Range.Text = excelWs.Range("N" & 当前行号).Text
-		' 综合成绩
-		wordDoc.Tables(1).Cell(3, 4).Range.Text = excelWs.Range("K" & 当前行号).Text
-		' 综合等级
-		wordDoc.Tables(1).Cell(3, 6).Range.Text = excelWs.Range("L" & 当前行号).Text
-		' 所在学校
-		wordDoc.Tables(1).Cell(4, 2).Range.Text = excelWs.Range("F" & 当前行号).Text
+		wordDoc.Tables(1).Cell(1, 2).Range.Text = 获取当前行数据("姓名")
+		wordDoc.Tables(1).Cell(1, 4).Range.Text = 获取当前行数据("ID")
+		wordDoc.Tables(1).Cell(1, 6).Range.Text = 获取当前行数据("性别")
+		wordDoc.Tables(1).Cell(2, 2).Range.Text = 获取当前行数据("年级")
+		wordDoc.Tables(1).Cell(2, 4).Range.Text = 获取当前行数据("班级")
+		wordDoc.Tables(1).Cell(2, 6).Range.Text = 获取当前行数据("测试成绩")
+		wordDoc.Tables(1).Cell(3, 2).Range.Text = 获取当前行数据("测试成绩评定")
+		wordDoc.Tables(1).Cell(3, 4).Range.Text = 获取当前行数据("综合成绩")
+		wordDoc.Tables(1).Cell(3, 6).Range.Text = 获取当前行数据("综合评定")
+		wordDoc.Tables(1).Cell(4, 2).Range.Text = 获取当前行数据("学校")
 
-		logI("结束 - 生成学生情况")
+		'logI("结束 - 生成学生情况")
 
 		生成学生情况 = 0
 	End Function
@@ -779,27 +771,27 @@ out:
 		Dim idx As UInt32 = 0
 		Dim i As UInt32 = 0
 
-		logI("开始 - 生成单项指标")
+		'logI("开始 - 生成单项指标")
 
 		' 身体形态
-		内容 = excelWs.Range("R" & 当前行号).Text
+		内容 = 获取当前行数据("身高体重指数")
 		If 内容 = "X" Then 内容 = ""
 		wordDoc.Tables(表格位置).Cell(2, 2).Range.Text = 内容
-		内容 = excelWs.Range("S" & 当前行号).Text
+		内容 = 获取当前行数据("身高体重成绩")
 		If 内容 = "X" Then 内容 = ""
 		wordDoc.Tables(表格位置).Cell(2, 3).Range.Text = 内容
-		内容 = excelWs.Range("T" & 当前行号).Text
+		内容 = 获取当前行数据("身高体重等级")
 		If 内容 = "X" Then 内容 = ""
 		wordDoc.Tables(表格位置).Cell(2, 4).Range.Text = 内容
 		wordDoc.Tables(表格位置).Cell(2, 5).Range.Text = "/"
 		' 身体机能
-		内容 = excelWs.Range("U" & 当前行号).Text
+		内容 = 获取当前行数据("肺活量成绩")
 		If 内容 = "X" Then 内容 = ""
 		wordDoc.Tables(表格位置).Cell(3, 2).Range.Text = 内容
-		内容 = excelWs.Range("V" & 当前行号).Text
+		内容 = 获取当前行数据("肺活量得分")
 		If 内容 = "X" Then 内容 = ""
 		wordDoc.Tables(表格位置).Cell(3, 3).Range.Text = 内容
-		内容 = excelWs.Range("W" & 当前行号).Text
+		内容 = 获取当前行数据("肺活量等级")
 		If 内容 = "X" Then 内容 = ""
 		wordDoc.Tables(表格位置).Cell(3, 4).Range.Text = 内容
 		wordDoc.Tables(表格位置).Cell(3, 5).Range.Text = "/"
@@ -815,27 +807,27 @@ out:
 			测项序号 = 学生测试项信息(idx + i)
 
 			内容 = 测项名称信息(测项序号)
-			logW(i & " " & idx & " 测项 " & 测项序号 & " " & 内容)
+			'logW(i & " " & idx & " 测项 " & 测项序号 & " " & 内容)
 			wordDoc.Tables(表格位置).Cell(3 + i, 1).Range.Text = 内容
 
-			内容 = excelWs.Cells(当前行号, 测项起始列号 + 3 * 测项序号 + 0).Text
+			内容 = 获取当前行数据(测项起始列号 + 3 * 测项序号 + 0)
 			If 内容 = "X" Then 内容 = ""
-			logW(内容)
+			'logW(内容)
 			wordDoc.Tables(表格位置).Cell(3 + i, 2).Range.Text = 内容
 
-			内容 = excelWs.Cells(当前行号, 测项起始列号 + 3 * 测项序号 + 1).Text
+			内容 = 获取当前行数据(测项起始列号 + 3 * 测项序号 + 1)
 			If 内容 = "X" Then 内容 = ""
-			logW(内容)
+			'logW(内容)
 			wordDoc.Tables(表格位置).Cell(3 + i, 3).Range.Text = 内容
 
-			内容 = excelWs.Cells(当前行号, 测项起始列号 + 3 * 测项序号 + 2).Text
+			内容 = 获取当前行数据(测项起始列号 + 3 * 测项序号 + 2)
 			If 内容 = "X" Then 内容 = ""
-			logW(内容)
+			'logW(内容)
 			wordDoc.Tables(表格位置).Cell(3 + i, 4).Range.Text = 内容
 
-			内容 = excelWs.Cells(当前行号, 测项附加分起始列号 + 2 * 测项序号).Text
+			内容 = 获取当前行数据(测项附加分起始列号 + 2 * 测项序号)
 			If 内容 = "1" Then
-				内容 = excelWs.Cells(当前行号, 测项附加分起始列号 + 2 * 测项序号 + 1).Text
+				内容 = 获取当前行数据(测项附加分起始列号 + 2 * 测项序号 + 1)
 				If 内容 <> "" And 内容 <> "0" Then
 					wordDoc.Tables(表格位置).Cell(3 + i, 5).Range.Text = 内容
 				Else
@@ -846,37 +838,7 @@ out:
 			End If
 		Next
 
-		Dim first As UInt32 = 0
-		'idx = 当前类别 * 6
-		'For i = 1 To 学生测试项信息(idx)
-		'	测项序号 = 学生测试项信息(idx + i)
-
-		'	If excelWs.Cells(当前行号, 基础序号 + 2 * 测项序号 + 0).Text() <> "1" Then
-		'		Continue For
-		'	End If
-
-		'	If first = 0 Then
-		'		first = 1
-		'	Else
-		'		wordDoc.Tables(表格位置).Rows.Add()
-		'	End If
-
-		'	内容 = 测项名称信息(测项序号)
-		'	logW(i & " " & idx & " 测项 " & 测项序号 & " " & 内容)
-		'	wordDoc.Tables(表格位置).Rows.Last.Cells(1).Range.Text = 内容
-
-		'	'内容 = excelWs.Cells(当前行号, 测项起始列号 + 3 * 测项序号 + 0).Text
-		'	'If 内容 = "X" Then 内容 = ""
-		'	'logW(内容)
-		'	wordDoc.Tables(表格位置).Rows.Last.Cells(2).Range.Text = "/"
-
-		'	内容 = excelWs.Cells(当前行号, 基础序号 + 2 * 测项序号 + 1).Text
-		'	If 内容 = "X" Or 内容 = "/" Or 内容 = "0" Or 内容 = "" Then 内容 = "/"
-		'	logW(内容)
-		'	wordDoc.Tables(表格位置).Rows.Last.Cells(3).Range.Text = 内容
-		'Next
-
-		logI("结束 - 生成单项指标")
+		'logI("结束 - 生成单项指标")
 
 		生成单项指标 = 0
 	End Function
@@ -888,19 +850,19 @@ out:
 		Dim idx As UInt32 = 0
 		Dim i As UInt32
 
-		logI("开始 - 生成各指标得分图表")
+		'logI("开始 - 生成各指标得分图表")
 
 		Try
 			图表工作表 = excelWbTmpl.Sheets(工作表名称信息(当前类别) & "图表")
 			图表工作表.Activate()
-			图表工作表.Cells(1, 2).Value2 = excelWs.Range("S" & 当前行号).Text
-			图表工作表.Cells(2, 2).Value2 = excelWs.Range("V" & 当前行号).Text
+			图表工作表.Cells(1, 2).Value2 = 获取当前行数据("身高体重成绩")
+			图表工作表.Cells(2, 2).Value2 = 获取当前行数据("肺活量得分")
 
 			' 动态项
 			idx = 当前类别 * 6
 			For i = 1 To 学生测试项信息(idx)
 				测项序号 = 学生测试项信息(idx + i)
-				图表工作表.Cells(2 + i, 2).Value2 = excelWs.Cells(当前行号, 测项起始列号 + 3 * 测项序号 + 1).Text
+				图表工作表.Cells(2 + i, 2).Value2 = 获取当前行数据(测项起始列号 + 3 * 测项序号 + 1)
 			Next
 
 			图表工作表.Shapes.SelectAll()
@@ -919,7 +881,7 @@ out:
 		wordDoc.Application.Selection.PasteAndFormat(Word.WdRecoveryType.wdChartPicture)
 
 out:
-		logI("结束 - 生成各指标得分图表")
+		'logI("结束 - 生成各指标得分图表")
 
 		生成各指标得分图表 = 0
 	End Function
@@ -957,7 +919,7 @@ out:
 	End Function
 
 	Function 生成学校整体情况()
-		logI("开始 - 生成学校整体情况")
+		'logI("开始 - 生成学校整体情况")
 
 		Dim 表格位置 As UInt32 = 3
 		Dim col As UInt32
@@ -979,7 +941,7 @@ out:
 		Next
 
 out:
-		logI("结束- 生成学校整体情况")
+		'logI("结束- 生成学校整体情况")
 
 		生成学校整体情况 = 0
 	End Function
@@ -988,7 +950,7 @@ out:
 		Dim idx As UInt32
 		Dim i As UInt32
 
-		logI("开始 - 生成运动处方")
+		'logI("开始 - 生成运动处方")
 
 		Dim wordFind As Word.Find
 		wordFind = wordDoc.Application.Selection.Find
@@ -1013,8 +975,8 @@ out:
 		Dim 等级 As UInt32
 
 		' 学生评价等级的建议
-		等级 = 计算等级(excelWs.Range("L" & 当前行号).Text)
-		logW("等级 " & 等级)
+		等级 = 计算等级(获取当前行数据("综合评定"))
+		'logW("等级 " & 等级)
 		wordDoc.Application.Selection.Style = "主标题1"
 		wordDoc.Application.Selection.TypeText("（一）" & excelWsTmpl.Range("A1").Text)
 		wordDoc.Application.Selection.TypeParagraph()
@@ -1022,8 +984,7 @@ out:
 		wordDoc.Application.Selection.TypeText(excelWsTmpl.Range("E" & (1 + 1 + 等级 * 3)).Text)
 		wordDoc.Application.Selection.TypeParagraph()
 
-		'评价 = excelWsTmpl.Range("Q" & 当前行号).Text
-		Select Case excelWs.Range("T" & 当前行号).Text
+		Select Case 获取当前行数据("身高体重等级")
 			Case "正常"
 				身高体重等级 = 0
 				等级 = 2
@@ -1047,7 +1008,7 @@ out:
 		wordDoc.Application.Selection.TypeParagraph()
 
 		' 学生肺活量的建议
-		等级 = 计算等级(excelWs.Range("W" & 当前行号).Text)
+		等级 = 计算等级(获取当前行数据("肺活量等级"))
 		wordDoc.Application.Selection.Style = "主标题1"
 		wordDoc.Application.Selection.TypeText("（三）" & excelWsTmpl.Range("A27").Text)
 		wordDoc.Application.Selection.TypeParagraph()
@@ -1078,7 +1039,7 @@ out:
 			idx = 62 + 1 + i * 4 * 4 * 3
 			Dim 测项列号 As UInt32
 			测项列号 = 测项起始列号 + 学生测试项信息(当前类别 * 6 + 1) * 3 + 2
-			等级 = 计算等级(excelWs.Cells(当前行号, 测项列号).Text)
+			等级 = 计算等级(获取当前行数据(测项列号))
 			idx = idx + 等级 * 4 * 3 + 身高体重等级 * 3
 
 			' 需要加粗
@@ -1091,13 +1052,13 @@ out:
 			wordDoc.Application.Selection.TypeParagraph()
 		Next
 
-		logI("结束 - 生成运动处方")
+		'logI("结束 - 生成运动处方")
 
 		生成运动处方 = 0
 	End Function
 
 	Function 生成报告()
-		logI("开始 - 生成报告")
+		'logI("开始 - 生成报告")
 
 		生成首页()
 
@@ -1111,15 +1072,23 @@ out:
 
 		生成运动处方()
 
-		logI("结束 - 生成报告")
+		'logI("结束 - 生成报告")
 
 		生成报告 = 0
 	End Function
 
 	Public Sub New()
+		Dim i As UInt32
 
 		st = New Student()
-		ReDim st.arr(128)
+		ReDim st.arr(最大缓存列数 - 1)
+
+		For i = 0 To 最大缓存行数 - 1
+			ReDim 数据缓存(i)(最大缓存列数 - 1)
+		Next
+
+		学校转学区表 = New Dictionary(Of String, String)
+		列名转列号表 = New Dictionary(Of String, UInt32)
 
 		' 此调用是 Windows 窗体设计器所必需的。
 		InitializeComponent()
@@ -1474,26 +1443,67 @@ out:
 	  20, 159, 155, 335, 330, 325, 320, 318, 316, 314, 312, _
 	  10, 163, 159, 345, 340, 335, 330, 328, 326, 324, 322}
 
+	Sub 预取数据到缓存(ByRef excelWsSrc As Excel.Worksheet)
+		If 已经读取的行数 < 当前行号 Then
+			Dim obj(,) As Object
+
+			obj = excelWsSrc.Range(excelWsSrc.Cells(当前行号, 1), excelWsSrc.Cells(当前行号 + 最大缓存行数 - 1, 最大缓存列数)).Value2
+
+			Dim i As UInt32
+			Dim j As UInt32
+			For i = 0 To 最大缓存行数 - 1
+				For j = 0 To 最大缓存列数 - 1
+					If obj(i + 1, j + 1) Is Nothing Then
+						数据缓存(i)(j) = String.Empty
+					Else
+						数据缓存(i)(j) = obj(i + 1, j + 1).ToString()
+					End If
+				Next
+			Next
+
+			已经读取的行数 += 最大缓存行数
+		End If
+	End Sub
+
+	Function 获取当前行数据(ByRef 列名 As String) As String
+		Dim 行号 As UInt32
+		获取当前行数据 = String.Empty
+		If 列名转列号表.ContainsKey(列名) Then
+			行号 = ((当前行号 - 1) Mod 最大缓存行数)
+			获取当前行数据 = 数据缓存(行号)(列名转列号表(列名))
+		End If
+	End Function
+
+	Function 获取当前行数据(ByVal 列号 As Long) As String
+		Dim 行号 As UInt32
+		行号 = ((当前行号 - 1) Mod 最大缓存行数)
+		获取当前行数据 = 数据缓存(行号)(列号 - 1)
+	End Function
+
+	Sub 移动到下一行()
+		当前行号 += 1
+	End Sub
+
+	Sub 生成列信息表格()
+		Dim i As UInt32
+		For i = 0 To 最大缓存列数 - 1
+			If Not 列名转列号表.ContainsKey(数据缓存(0)(i)) Then 列名转列号表(数据缓存(0)(i)) = i
+		Next
+	End Sub
+
 	Sub start(ByVal 共几个文件 As UInt32, ByVal 第几个文件 As UInt32, ByRef excelWsSrc As Excel.Worksheet, ByRef excelWsDst As Excel.Worksheet)
-		Dim row As Long
-		'Dim offset As Long
-
-		Dim dbg As Long
-
-		'dbg = 0
-		'row = excelWsSrc.ActiveCell.row()
-		'offset = 0
-		'If dbg = 0 Then
-		'	row = 1
-		'	offset = 1 - ActiveCell.row()
-		'End If
-
 		' 重置学校整体情况
 		For i = 0 To 3
 			各等级计数(i) = 0
 			各身体形态计数(i) = 0
 			各身体机能计数(i) = 0
 		Next
+
+		列名转列号表.Clear()
+		当前行号 = 1
+		已经读取的行数 = 0
+		预取数据到缓存(excelWs)
+		生成列信息表格()
 
 		logW("创建表头")
 
@@ -1502,44 +1512,33 @@ out:
 
 		logW("开始生成")
 
-		row = 2
 		Do While True
+			移动到下一行()
+			预取数据到缓存(excelWs)
+
 			' end of data
-			If excelWsSrc.Range("A" & row).Text = "" Then Exit Do
+			If 获取当前行数据("姓名") = String.Empty Then Exit Do
 
 			' invalid grade
-			If Not excelWsSrc.Range("B" & row).Text < 100 Then GoTo rowComplete
-			If Not excelWsSrc.Range("B" & row).Text > 10 Then GoTo rowComplete
+			If Not 获取当前行数据("年级编号") < 100 Then GoTo rowComplete
+			If Not 获取当前行数据("年级编号") > 10 Then GoTo rowComplete
 
-			logI(String.Format("生成第{0}行", row))
+			logR(String.Format("生成第{0}行", 当前行号))
 
 			initStudent(st)
 
-			'ret = readStudent(st, row)
-			'If ret <> 0 Then GoTo rowComplete
-			readStudent(excelWsSrc, row, st)
+			readStudent(excelWsSrc, 当前行号, st)
 
-			'ret = calcStudentScore(st)
-			'If ret <> 0 Then
-			'	logE("生成失败，行" & row)
-			'	GoTo rowComplete
-			'End If
 			calcStudentScore(st)
 
-			createStudentReport(excelWsSrc, row, st, excelWsDst)
+			createStudentReport(excelWsSrc, 当前行号, st, excelWsDst)
 
-			sendProgress(String.Format("共{0}个文件。当前处理第{1}个文件的第{2}行", 共几个文件, 第几个文件, row))
+			sendProgress(String.Format("共{0}个文件。当前处理第{1}个文件的第{2}行", 共几个文件, 第几个文件, 当前行号))
 
 			purgeAsync()
 
 			If wkExiting Then Exit Do
-
-			' debug
-			'If row > 3 Then Exit Do
-
-			If dbg = 1 Then Exit Do
 rowComplete:
-			row = row + 1
 		Loop
 
 		createSchoolOveral(excelWsDst)
@@ -1644,55 +1643,102 @@ rowComplete:
 	End Function
 
 	Sub readStudent(ByRef excelWsSrc As Excel.Worksheet, ByVal row As Long, ByRef st As Student)
-		If excelWsSrc.Range("B" & row).Text < 20 Then
-			st.idStr = excelWsSrc.Range("E" & row).Text
-			st.schoolStr = excelWsSrc.Range("A" & row).Text
-			st.classStr = excelWsSrc.Range("D" & row).Text
-			st.nameStr = excelWsSrc.Range("G" & row).Text
-			st.genderStr = excelWsSrc.Range("H" & row).Text
-			st.gender = excelWsSrc.Range("H" & row).Value2
-			st.gradeStr = excelWsSrc.Range("B" & row).Text
-			st.heightStr = excelWsSrc.Range("M" & row).Text
-			st.weightStr = excelWsSrc.Range("N" & row).Text
-			st.fhlStr = excelWsSrc.Range("O" & row).Text
-			st.m50Str = excelWsSrc.Range("P" & row).Text
-			st.zwtStr = excelWsSrc.Range("Q" & row).Text
-			st.tsStr = excelWsSrc.Range("R" & row).Text
-			st.tyStr = excelWsSrc.Range("R" & row).Text
-			st.ywqz0Str = excelWsSrc.Range("S" & row).Text
-			st.ywqz1Str = excelWsSrc.Range("S" & row).Text
-			st.nlp0Str = excelWsSrc.Range("T" & row).Text
-			st.nlp1Str = excelWsSrc.Range("T" & row).Text
+		If 获取当前行数据("年级编号") < 20 Then
+			st.idStr = 获取当前行数据("学籍号")
+			st.schoolStr = 获取当前行数据("学校名称")
+			st.classStr = 获取当前行数据("班级名称")
+			st.nameStr = 获取当前行数据("姓名")
+			st.genderStr = 获取当前行数据("性别")
+			st.gender = 获取当前行数据("性别")
+			st.gradeStr = 获取当前行数据("年级编号")
+			st.heightStr = 获取当前行数据("身高")
+			st.weightStr = 获取当前行数据("体重")
+			st.fhlStr = 获取当前行数据("肺活量")
+			st.m50Str = 获取当前行数据("50米")
+			st.zwtStr = 获取当前行数据("坐位体前屈")
+			st.tsStr = 获取当前行数据("一分钟跳绳")
+			st.tyStr = 获取当前行数据("一分钟跳绳")
+			st.ywqz0Str = 获取当前行数据("仰卧起坐")
+			st.ywqz1Str = 获取当前行数据("仰卧起坐")
+			st.nlp0Str = 获取当前行数据("50米*8往返跑")
+			st.nlp1Str = 获取当前行数据("50米*8往返跑")
+			'st.idStr = excelWsSrc.Range("E" & row).Text
+			'st.schoolStr = excelWsSrc.Range("A" & row).Text
+			'st.classStr = excelWsSrc.Range("D" & row).Text
+			'st.nameStr = excelWsSrc.Range("G" & row).Text
+			'st.genderStr = excelWsSrc.Range("H" & row).Text
+			'st.gender = excelWsSrc.Range("H" & row).Value2
+			'st.gradeStr = excelWsSrc.Range("B" & row).Text
+			'st.heightStr = excelWsSrc.Range("M" & row).Text
+			'st.weightStr = excelWsSrc.Range("N" & row).Text
+			'st.fhlStr = excelWsSrc.Range("O" & row).Text
+			'st.m50Str = excelWsSrc.Range("P" & row).Text
+			'st.zwtStr = excelWsSrc.Range("Q" & row).Text
+			'st.tsStr = excelWsSrc.Range("R" & row).Text
+			'st.tyStr = excelWsSrc.Range("R" & row).Text
+			'st.ywqz0Str = excelWsSrc.Range("S" & row).Text
+			'st.ywqz1Str = excelWsSrc.Range("S" & row).Text
+			'st.nlp0Str = excelWsSrc.Range("T" & row).Text
+			'st.nlp1Str = excelWsSrc.Range("T" & row).Text
 		Else
-			st.idStr = excelWsSrc.Range("E" & row).Text
-			st.schoolStr = excelWsSrc.Range("A" & row).Text
-			st.classStr = excelWsSrc.Range("D" & row).Text
-			st.nameStr = excelWsSrc.Range("G" & row).Text
-			st.genderStr = excelWsSrc.Range("H" & row).Text
-			st.gender = excelWsSrc.Range("H" & row).Value2
-			st.gradeStr = excelWsSrc.Range("B" & row).Text
-			st.heightStr = excelWsSrc.Range("M" & row).Text
-			st.weightStr = excelWsSrc.Range("N" & row).Text
-			st.fhlStr = excelWsSrc.Range("O" & row).Text
-			st.m50Str = excelWsSrc.Range("P" & row).Text
-			st.zwtStr = excelWsSrc.Range("Q" & row).Text
+			st.idStr = 获取当前行数据("学籍号")
+			st.schoolStr = 获取当前行数据("学校名称")
+			st.classStr = 获取当前行数据("班级名称")
+			st.nameStr = 获取当前行数据("姓名")
+			st.genderStr = 获取当前行数据("性别")
+			st.gender = 获取当前行数据("性别")
+			st.gradeStr = 获取当前行数据("年级编号")
+			st.heightStr = 获取当前行数据("身高")
+			st.weightStr = 获取当前行数据("体重")
+			st.fhlStr = 获取当前行数据("肺活量")
+			st.m50Str = 获取当前行数据("50米")
+			st.zwtStr = 获取当前行数据("坐位体前屈")
 			' ty
-			st.tsStr = excelWsSrc.Range("R" & row).Text
-			st.tyStr = excelWsSrc.Range("R" & row).Text
-			If excelWsSrc.Range("U" & row).Text <> "" Then
-				st.ywqz0Str = excelWsSrc.Range("U" & row).Text
+			st.tsStr = 获取当前行数据("立定跳远")
+			st.tyStr = 获取当前行数据("立定跳远")
+			If 获取当前行数据("仰卧起坐") <> String.Empty Then
+				st.ywqz0Str = 获取当前行数据("仰卧起坐")
 				'st.ywqz1Str = Range("u" & row)
 			Else
-				st.ywqz0Str = excelWsSrc.Range("v" & row).Text
+				st.ywqz0Str = 获取当前行数据("引体向上")
 				'st.ywqz1Str = Range("V" & row)
 			End If
-			If excelWsSrc.Range("S" & row).Text <> "" Then
-				st.nlp0Str = excelWsSrc.Range("S" & row).Text
+			If 获取当前行数据("800米") <> String.Empty Then
+				st.nlp0Str = 获取当前行数据("800米")
 				'st.nlp1Str = Range("S" & row)
 			Else
-				st.nlp0Str = excelWsSrc.Range("T" & row).Text
+				st.nlp0Str = 获取当前行数据("1000米")
 				'st.nlp1Str = Range("T" & row)
 			End If
+			'st.idStr = excelWsSrc.Range("E" & row).Text
+			'st.schoolStr = excelWsSrc.Range("A" & row).Text
+			'st.classStr = excelWsSrc.Range("D" & row).Text
+			'st.nameStr = excelWsSrc.Range("G" & row).Text
+			'st.genderStr = excelWsSrc.Range("H" & row).Text
+			'st.gender = excelWsSrc.Range("H" & row).Value2
+			'st.gradeStr = excelWsSrc.Range("B" & row).Text
+			'st.heightStr = excelWsSrc.Range("M" & row).Text
+			'st.weightStr = excelWsSrc.Range("N" & row).Text
+			'st.fhlStr = excelWsSrc.Range("O" & row).Text
+			'st.m50Str = excelWsSrc.Range("P" & row).Text
+			'st.zwtStr = excelWsSrc.Range("Q" & row).Text
+			'' ty
+			'st.tsStr = excelWsSrc.Range("R" & row).Text
+			'st.tyStr = excelWsSrc.Range("R" & row).Text
+			'If excelWsSrc.Range("U" & row).Text <> "" Then
+			'	st.ywqz0Str = excelWsSrc.Range("U" & row).Text
+			'	'st.ywqz1Str = Range("u" & row)
+			'Else
+			'	st.ywqz0Str = excelWsSrc.Range("v" & row).Text
+			'	'st.ywqz1Str = Range("V" & row)
+			'End If
+			'If excelWsSrc.Range("S" & row).Text <> "" Then
+			'	st.nlp0Str = excelWsSrc.Range("S" & row).Text
+			'	'st.nlp1Str = Range("S" & row)
+			'Else
+			'	st.nlp0Str = excelWsSrc.Range("T" & row).Text
+			'	'st.nlp1Str = Range("T" & row)
+			'End If
 		End If
 
 		logW(String.Format("{0} {1} {2} {3} {4}", st.nameStr, st.gender, st.schoolStr, st.gradeStr, st.classStr))
