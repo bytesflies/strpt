@@ -5,7 +5,8 @@ Imports Microsoft.Office.Interop
 Public Class Form1
 	' 测试数据Excel信息
 
-	Dim 测项起始列号 As UInt32 = 24
+	Dim 测项起始列号 As UInt32 = 0
+	Dim 测项附加分起始列号 As UInt32 = 0
 
 	Dim 测项名称信息() As String = { _
 	  "50米跑（单位：秒）", _
@@ -136,6 +137,9 @@ Public Class Form1
 	Sub logtoUI(ByRef msgEntity As MsgEntity)
 		If msgEntity.type = MsgType.mtNormal Then
 			RichTextBox1.Text = msgEntity.data & Chr(13) & Chr(10) & RichTextBox1.Text
+			If RichTextBox1.Text.Length > 8192 Then
+				RichTextBox1.Text = Strings.Left(RichTextBox1.Text, 4096)
+			End If
 		ElseIf msgEntity.type = MsgType.mtProgress Then
 			Label1.Text = msgEntity.data
 		Else
@@ -197,7 +201,7 @@ retry:
 	Protected Sub log(ByVal tag As String, ByVal msg As String)
 		Dim fmtMsg As String
 		fmtMsg = String.Format("[{0}] {1} {2}", Now, tag, msg)
-		If tag <> "信息" Then sendMsg(fmtMsg)
+		If tag = "错误" Or tag = "致命" Or tag = "报表" Then sendMsg(fmtMsg)
 		If Not logger Is Nothing Then logger.WriteLine(fmtMsg)
 	End Sub
 
@@ -211,6 +215,10 @@ retry:
 
 	Protected Sub logW(ByVal msg As String)
 		log("警告", msg)
+	End Sub
+
+	Protected Sub logR(ByVal msg As String)
+		log("报表", msg)
 	End Sub
 
 	Protected Sub logE(ByVal msg As String)
@@ -292,9 +300,7 @@ retry:
 					当前类别 = 6
 				End If
 		End Select
-		logW("年级: " & 年级)
-		logW("性别: " & 性别)
-		logW("计算类别: " & 当前类别)
+		logR("当前行: " & 当前行号 & " 年级: " & 年级 & " 性别: " & 性别 & " 计算类别: " & 当前类别)
 	End Sub
 
 	Private Function 计算等级(ByVal 评价 As String)
@@ -494,14 +500,27 @@ out:
 			End Try
 		End If
 
+		测项起始列号 = 0
+		测项附加分起始列号 = 0
+		For i = 0 To rptHdrTbl.Length - 1
+			If rptHdrTbl(i) = "50米跑成绩" Then
+				测项起始列号 = i + 1
+			End If
+			If rptHdrTbl(i) = "是否有50米跑" Then
+				测项附加分起始列号 = i + 1
+			End If
+		Next
+
+		If 测项起始列号 = 0 Or 测项附加分起始列号 = 0 Then
+			logE("测项起始列号 " & 测项起始列号 & " 测项附加分起始列号 " & 测项附加分起始列号)
+		End If
+
 		Try
 			计算学校整体情况()
 
 			当前行号 = 2
 			Do While True
 				'If excelWs.Range("B" & 当前行号).Text = "" Then Exit Do
-
-				logW("当前行号 " & 当前行号)
 
 				计算类别()
 
@@ -543,9 +562,9 @@ out:
 	Private Sub 生成()
 		logI("开始 - 生成")
 
-		logW("待处理文件列表: " & String.Join(",", 待处理文件列表))
+		'logR("待处理文件列表: " & String.Join(",", 待处理文件列表))
 		If 待处理文件列表 Is Nothing Or 待处理文件列表.Length = 0 Then
-			logW("没有待处理文件列表")
+			logR("没有待处理文件列表")
 			GoTo out
 		End If
 
@@ -558,10 +577,10 @@ out:
 		' 循环处理所有Excel
 		Try
 			For i = 0 To 待处理文件列表.Length - 1
-				logW("开始 - 处理: " & 待处理文件列表(i))
+				logR("开始 - 处理: " & 待处理文件列表(i))
 				' 处理一个Excel
 				处理数据(待处理文件列表.Length, i + 1, 待处理文件列表(i))
-				logW("结束 - 处理: " & 待处理文件列表(i))
+				logR("结束 - 处理: " & 待处理文件列表(i))
 				logFlush()
 				If wkExiting Then Exit For
 			Next
@@ -601,6 +620,8 @@ out:
 	End Sub
 
 	Private Sub 点击事件(ByVal 类别 As Int32)
+		Dim i As UInt32
+
 		If Thread.VolatileRead(wkStart) Then
 			If Thread.VolatileRead(wkDone) = 0 Then
 				MsgBox("正在处理中 ...")
@@ -623,11 +644,14 @@ out:
 			待处理文件列表 = .FileNames
 		End With
 
-		logW("待处理文件列表: " & String.Join(",", 待处理文件列表))
 		If 待处理文件列表 Is Nothing Or 待处理文件列表.Length = 0 Then
-			logW("没有待处理文件列表")
+			logR("没有待处理文件列表")
 			GoTo out
 		End If
+
+		For i = 0 To 待处理文件列表.Length - 1
+			logR("第" & (i + 1) & "个待处理文件 " & 待处理文件列表(i))
+		Next
 
 		Label1.Text = ""
 
@@ -711,9 +735,7 @@ out:
 		' 学生姓名
 		wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(8).Range.Text = 学生姓名
 
-		logW("学校名称 " & 学校名称)
-		logW("年级班级 " & 年级班级)
-		logW("学生姓名 " & 学生姓名)
+		logR("学校名称 " & 学校名称 & " 年级班级 " & 年级班级 & " 学生姓名 " & 学生姓名)
 
 		logI("结束 - 生成首页")
 
@@ -754,7 +776,6 @@ out:
 		Dim 测项序号 As UInt32 = 0
 		Dim 表格行 As UInt32 = 0
 		Dim 内容 As String
-		Dim first As UInt32
 		Dim idx As UInt32 = 0
 		Dim i As UInt32 = 0
 
@@ -770,6 +791,7 @@ out:
 		内容 = excelWs.Range("T" & 当前行号).Text
 		If 内容 = "X" Then 内容 = ""
 		wordDoc.Tables(表格位置).Cell(2, 4).Range.Text = 内容
+		wordDoc.Tables(表格位置).Cell(2, 5).Range.Text = "/"
 		' 身体机能
 		内容 = excelWs.Range("U" & 当前行号).Text
 		If 内容 = "X" Then 内容 = ""
@@ -780,14 +802,16 @@ out:
 		内容 = excelWs.Range("W" & 当前行号).Text
 		If 内容 = "X" Then 内容 = ""
 		wordDoc.Tables(表格位置).Cell(3, 4).Range.Text = 内容
+		wordDoc.Tables(表格位置).Cell(3, 5).Range.Text = "/"
 
 		' 动态项
 		idx = 当前类别 * 6
 		For i = 1 To 学生测试项信息(idx)
-			' 在加分指标前面加一行
-			If i <> 学生测试项信息(idx) Then
-				wordDoc.Tables(表格位置).Rows.Add(wordDoc.Tables(表格位置).Rows(wordDoc.Tables(表格位置).Rows.Count - 2))
-			End If
+			'' 在加分指标前面加一行
+			'If i <> 学生测试项信息(idx) Then
+			'	wordDoc.Tables(表格位置).Rows.Add(wordDoc.Tables(表格位置).Rows(wordDoc.Tables(表格位置).Rows.Count - 2))
+			'End If
+			wordDoc.Tables(表格位置).Rows.Add()
 			测项序号 = 学生测试项信息(idx + i)
 
 			内容 = 测项名称信息(测项序号)
@@ -808,37 +832,49 @@ out:
 			If 内容 = "X" Then 内容 = ""
 			logW(内容)
 			wordDoc.Tables(表格位置).Cell(3 + i, 4).Range.Text = 内容
-		Next
 
-		first = 0
-		idx = 当前类别 * 6
-		For i = 1 To 学生测试项信息(idx)
-			测项序号 = 学生测试项信息(idx + i)
-
-			If excelWs.Cells(当前行号, 测项起始列号 + 27 + 2 * 测项序号 + 0).Text() = "0" Then
-				Continue For
-			End If
-
-			If first = 0 Then
-				first = 1
+			内容 = excelWs.Cells(当前行号, 测项附加分起始列号 + 2 * 测项序号).Text
+			If 内容 = "1" Then
+				内容 = excelWs.Cells(当前行号, 测项附加分起始列号 + 2 * 测项序号 + 1).Text
+				If 内容 <> "" And 内容 <> "0" Then
+					wordDoc.Tables(表格位置).Cell(3 + i, 5).Range.Text = 内容
+				Else
+					wordDoc.Tables(表格位置).Cell(3 + i, 5).Range.Text = "/"
+				End If
 			Else
-				wordDoc.Tables(表格位置).Rows.Add()
+				wordDoc.Tables(表格位置).Cell(3 + i, 5).Range.Text = "/"
 			End If
-
-			内容 = 测项名称信息(测项序号)
-			logW(i & " " & idx & " 测项 " & 测项序号 & " " & 内容)
-			wordDoc.Tables(表格位置).Rows.Last.Cells(1).Range.Text = 内容
-
-			'内容 = excelWs.Cells(当前行号, 测项起始列号 + 3 * 测项序号 + 0).Text
-			'If 内容 = "X" Then 内容 = ""
-			'logW(内容)
-			wordDoc.Tables(表格位置).Rows.Last.Cells(2).Range.Text = "/"
-
-			内容 = excelWs.Cells(当前行号, 测项起始列号 + 27 + 2 * 测项序号 + 1).Text
-			If 内容 = "X" Or 内容 = "/" Or 内容 = "0" Or 内容 = "" Then 内容 = "/"
-			logW(内容)
-			wordDoc.Tables(表格位置).Rows.Last.Cells(3).Range.Text = 内容
 		Next
+
+		Dim first As UInt32 = 0
+		'idx = 当前类别 * 6
+		'For i = 1 To 学生测试项信息(idx)
+		'	测项序号 = 学生测试项信息(idx + i)
+
+		'	If excelWs.Cells(当前行号, 基础序号 + 2 * 测项序号 + 0).Text() <> "1" Then
+		'		Continue For
+		'	End If
+
+		'	If first = 0 Then
+		'		first = 1
+		'	Else
+		'		wordDoc.Tables(表格位置).Rows.Add()
+		'	End If
+
+		'	内容 = 测项名称信息(测项序号)
+		'	logW(i & " " & idx & " 测项 " & 测项序号 & " " & 内容)
+		'	wordDoc.Tables(表格位置).Rows.Last.Cells(1).Range.Text = 内容
+
+		'	'内容 = excelWs.Cells(当前行号, 测项起始列号 + 3 * 测项序号 + 0).Text
+		'	'If 内容 = "X" Then 内容 = ""
+		'	'logW(内容)
+		'	wordDoc.Tables(表格位置).Rows.Last.Cells(2).Range.Text = "/"
+
+		'	内容 = excelWs.Cells(当前行号, 基础序号 + 2 * 测项序号 + 1).Text
+		'	If 内容 = "X" Or 内容 = "/" Or 内容 = "0" Or 内容 = "" Then 内容 = "/"
+		'	logW(内容)
+		'	wordDoc.Tables(表格位置).Rows.Last.Cells(3).Range.Text = 内容
+		'Next
 
 		logI("结束 - 生成单项指标")
 
@@ -929,7 +965,7 @@ out:
 
 		'logW("count " & wordDoc.Tables.Count & " " & 表格位置)
 		If wordDoc.Tables.Count < 表格位置 Then
-			logW("没有找到学校整体情况")
+			logR("没有找到学校整体情况")
 			GoTo out
 		End If
 
@@ -1043,7 +1079,7 @@ out:
 			Dim 测项列号 As UInt32
 			测项列号 = 测项起始列号 + 学生测试项信息(当前类别 * 6 + 1) * 3 + 2
 			等级 = 计算等级(excelWs.Cells(当前行号, 测项列号).Text)
-			idx = idx + 等级 * 4 * 3 + 身高体重等级
+			idx = idx + 等级 * 4 * 3 + 身高体重等级 * 3
 
 			' 需要加粗
 			wordDoc.Application.Selection.Style = "主标题2"
@@ -1111,6 +1147,8 @@ out:
 	"800米跑成绩", "800米跑得分", "800米跑等级", _
 	"1000米跑成绩", "1000米跑得分", "1000米跑等级", _
 	"引体向上成绩", "引体向上得分", "引体向上等级", _
+	"是否有50米跑", "50米跑附加分", _
+	"是否有坐位体前屈", "坐位体前屈附加分", _
 	"是否有一分钟跳绳", "一分钟跳绳附加分", _
 	"是否有一分钟仰卧起坐", "一分钟仰卧起坐附加分", _
 	"是否有50米×8往返跑", "50米×8往返跑附加分", _
@@ -2086,6 +2124,16 @@ rowComplete:
 			End If
 			col = col + 3
 
+			' 50米跑
+			.arr(col + 0) = 0
+			.arr(col + 1) = 0
+			col += 2
+
+			' 坐位体前屈
+			.arr(col + 0) = 0
+			.arr(col + 1) = 0
+			col += 2
+
 			If 是否有跳绳 = 1 Then
 				.arr(col + 0) = "1"
 				.arr(col + 1) = st.tsJfScore
@@ -2666,6 +2714,10 @@ found:
 
 		' 附加分
 		st.totalJfScore = (st.tsJfScore + st.ywqzJfScore + st.nlpJfScore) * 100
+	End Sub
+
+	Private Sub Button4_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button4.Click
+		RichTextBox1.Text = ""
 	End Sub
 End Class
 
