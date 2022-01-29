@@ -112,6 +112,8 @@ Public Class Form1
 	Dim 学校转学区表 As Dictionary(Of String, String)
 	Dim 列名转列号表 As Dictionary(Of String, UInt32)
 
+	Dim 转pdf As Int32
+
 	' 日志
 	Dim logger As StreamWriter
 
@@ -635,6 +637,7 @@ out:
 		Dim s As String
 		Dim m As Int32
 
+		转pdf = 0
 		列重命名0.Clear()
 		列重命名1.Clear()
 		学校转学区表.Clear()
@@ -662,6 +665,9 @@ out:
 				If a(0) = "列重命名1" Then
 					m = 3
 					Continue While
+				End If
+				If a(0) = "转pdf" Then
+					转pdf = 1
 				End If
 				If m = 1 And a.Length = 2 Then
 					If Not 学校转学区表.ContainsKey(a(0)) Then 学校转学区表(a(0)) = a(1)
@@ -773,6 +779,18 @@ out:
 	Function 关闭报告()
 		'logW("开始 - 关闭报告")
 
+		If 转pdf = 1 Then
+			Try
+				Dim docFullName As String
+				Dim docPath As String
+				docPath = Application.StartupPath & "\" & 获取当前行数据("学校") & "\" & 获取当前行数据("年级") & "\" & 获取当前行数据("班级")
+				docFullName = docPath & "\" _
+				 & 获取当前行数据("学校") & "_" & 获取当前行数据("年级") & "_" & 获取当前行数据("班级") & "_" & 获取当前行数据("ID") & ".pdf"
+
+				wordDoc.SaveAs(docFullName, Word.WdSaveFormat.wdFormatPDF)
+			Catch
+			End Try
+		End If
 		wordDoc.Close(Word.WdSaveOptions.wdSaveChanges)
 		wordDoc = Nothing
 
@@ -1147,6 +1165,8 @@ out:
 		For i = 0 To 最大缓存行数 - 1
 			ReDim 数据缓存(i)(最大缓存列数 - 1)
 		Next
+
+		转pdf = 0
 
 		列重命名0 = New Dictionary(Of String, String)
 		列重命名1 = New Dictionary(Of String, String)
