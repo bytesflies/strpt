@@ -107,6 +107,8 @@ Public Class Form1
 	Dim displayExcel As Boolean = False
 	Dim displayWord As Boolean = False
 
+	Dim 列重命名0 As Dictionary(Of String, String)
+	Dim 列重命名1 As Dictionary(Of String, String)
 	Dim 学校转学区表 As Dictionary(Of String, String)
 	Dim 列名转列号表 As Dictionary(Of String, UInt32)
 
@@ -500,7 +502,7 @@ out:
 		当前行号 = 1
 		已经读取的行数 = 0
 		预取数据到缓存(excelWs)
-		生成列信息表格()
+		生成列信息表格(列重命名1)
 
 		If excelWbTmpl Is Nothing Then
 			Try
@@ -633,6 +635,8 @@ out:
 		Dim s As String
 		Dim m As Int32
 
+		列重命名0.Clear()
+		列重命名1.Clear()
 		学校转学区表.Clear()
 
 		Try
@@ -651,8 +655,22 @@ out:
 					m = 1
 					Continue While
 				End If
+				If a(0) = "列重命名0" Then
+					m = 2
+					Continue While
+				End If
+				If a(0) = "列重命名1" Then
+					m = 3
+					Continue While
+				End If
 				If m = 1 And a.Length = 2 Then
-					If Not 学校转学区表.ContainsKey(a(1)) Then 学校转学区表(a(1)) = a(0)
+					If Not 学校转学区表.ContainsKey(a(0)) Then 学校转学区表(a(0)) = a(1)
+				End If
+				If m = 2 And a.Length = 2 Then
+					If Not 列重命名0.ContainsKey(a(0)) Then 列重命名0(a(0)) = a(1)
+				End If
+				If m = 3 And a.Length = 2 Then
+					If Not 列重命名1.ContainsKey(a(0)) Then 列重命名1(a(0)) = a(1)
 				End If
 			End While
 		Catch ex As Exception
@@ -1130,6 +1148,8 @@ out:
 			ReDim 数据缓存(i)(最大缓存列数 - 1)
 		Next
 
+		列重命名0 = New Dictionary(Of String, String)
+		列重命名1 = New Dictionary(Of String, String)
 		学校转学区表 = New Dictionary(Of String, String)
 		列名转列号表 = New Dictionary(Of String, UInt32)
 
@@ -1527,10 +1547,17 @@ out:
 		当前行号 += 1
 	End Sub
 
-	Sub 生成列信息表格()
+	Sub 生成列信息表格(ByRef 列重命名 As Dictionary(Of String, String))
 		Dim i As UInt32
 		For i = 0 To 最大缓存列数 - 1
-			If Not 列名转列号表.ContainsKey(数据缓存(0)(i)) Then 列名转列号表(数据缓存(0)(i)) = i + 1
+			If 数据缓存(0)(i) <> String.Empty Then
+				Dim 映射后的列名 As String = 数据缓存(0)(i)
+				If 列重命名.ContainsKey(数据缓存(0)(i)) Then
+					映射后的列名 = 列重命名(映射后的列名)
+					logI("列重命名 " & 数据缓存(0)(i) & " " & 映射后的列名)
+				End If
+				If Not 列名转列号表.ContainsKey(映射后的列名) Then 列名转列号表(映射后的列名) = i + 1
+			End If
 		Next
 	End Sub
 
@@ -1546,7 +1573,7 @@ out:
 		当前行号 = 1
 		已经读取的行数 = 0
 		预取数据到缓存(excelWs)
-		生成列信息表格()
+		生成列信息表格(列重命名0)
 
 		logW("创建表头")
 
