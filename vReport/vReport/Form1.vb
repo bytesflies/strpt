@@ -1028,8 +1028,10 @@ out:
 	End Function
 
 	Function 生成运动处方()
+		Dim content As String
 		Dim idx As UInt32
 		Dim i As UInt32
+		Dim j As UInt32
 
 		'logI("开始 - 生成运动处方")
 
@@ -1110,6 +1112,8 @@ out:
 			wordDoc.Application.Selection.TypeParagraph()
 		Next
 
+		Randomize()
+
 		'学生身体素质测试结果的建议
 		wordDoc.Application.Selection.Style = "主标题1"
 		wordDoc.Application.Selection.TypeText("（五）" & excelWsTmpl.Range("A62").Text)
@@ -1131,8 +1135,28 @@ out:
 			'wordDoc.Application.Selection.Paragraphs.First.
 			wordDoc.Application.Selection.TypeParagraph()
 			wordDoc.Application.Selection.Style = "正文1"
-			wordDoc.Application.Selection.TypeText(excelWsTmpl.Range("E" & idx).Text)
-			wordDoc.Application.Selection.TypeParagraph()
+			content = excelWsTmpl.Range("E" & idx).Text
+			Dim item As String()
+			item = Strings.Split(content, Chr(10))
+			If item.Length > 3 Then
+				Dim tmp() As Int32 = {-1, -1, -1}
+				For j = 0 To 2
+					tmp(j) = Int(Rnd() * (item.Length - j))
+				Next
+				If tmp(1) >= tmp(0) Then tmp(1) += 1
+				If tmp(2) >= tmp(0) Then tmp(2) += 1
+				If tmp(2) >= tmp(1) Then tmp(2) += 1
+				logR(String.Format("随机项 {0} {1} {2}", tmp(0), tmp(1), tmp(2)))
+				For j = 0 To 2
+					wordDoc.Application.Selection.TypeText(j + 1 & ". " & item(tmp(j)))
+					wordDoc.Application.Selection.TypeParagraph()
+				Next
+			Else
+				For j = 0 To item.Length - 1
+					wordDoc.Application.Selection.TypeText(j + 1 & ". " & item(j))
+					wordDoc.Application.Selection.TypeParagraph()
+				Next
+			End If
 		Next
 
 		'logI("结束 - 生成运动处方")
@@ -1176,6 +1200,8 @@ out:
 		列重命名1 = New Dictionary(Of String, String)
 		学校转学区表 = New Dictionary(Of String, String)
 		列名转列号表 = New Dictionary(Of String, UInt32)
+
+		'Randomize(0)
 
 		' 此调用是 Windows 窗体设计器所必需的。
 		InitializeComponent()
