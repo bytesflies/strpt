@@ -957,6 +957,8 @@ out:
 		'excelWb.Activate()
 		wordDoc.Tables(表格位置).Select()
 		wordDoc.Application.Selection.MoveDown()
+		' 多塞个空行
+		wordDoc.Application.Selection.TypeParagraph()
 		wordDoc.Application.Selection.PasteAndFormat(Word.WdRecoveryType.wdChartPicture)
 
 out:
@@ -1117,9 +1119,11 @@ out:
 			' 4个等级, 4个小等级，每个小等级3行
 			idx = 62 + 1 + i * 4 * 4 * 3
 			Dim 测项列号 As UInt32
-			测项列号 = 测项起始列号 + 学生测试项信息(当前类别 * 6 + 1) * 3 + 2
+			测项列号 = 测项起始列号 + 学生测试项信息(当前类别 * 6 + 1 + i) * 3 + 2
 			等级 = 计算等级(获取当前行数据(测项列号))
 			idx = idx + 等级 * 4 * 3 + 身高体重等级 * 3
+
+			logR("建议" & i & " 测项列号 " & 测项列号 & " 等级 " & 获取当前行数据(测项列号) & " " & 等级)
 
 			' 需要加粗
 			wordDoc.Application.Selection.Style = "主标题2"
