@@ -114,6 +114,8 @@ Public Class Form1
 
 	Dim 转pdf As Int32
 
+	Dim maxNumOfAdvise As Int32 = 6
+
 	' 日志
 	Dim logger As StreamWriter
 
@@ -668,7 +670,19 @@ out:
 				End If
 				If a(0) = "转pdf" Then
 					转pdf = 1
+					Continue While
 				End If
+				If a(0) = "maxNumOfAdvise" Then
+					m = 0
+					If a.Length = 2 Then
+						maxNumOfAdvise = Int(a(1))
+						If maxNumOfAdvise < 1 Or maxNumOfAdvise > 256 Then
+							maxNumOfAdvise = 6
+						End If
+					End If
+					Continue While
+				End If
+
 				If m = 1 And a.Length = 2 Then
 					If Not 学校转学区表.ContainsKey(a(0)) Then 学校转学区表(a(0)) = a(1)
 				End If
@@ -1032,6 +1046,7 @@ out:
 		Dim idx As UInt32
 		Dim i As UInt32
 		Dim j As UInt32
+		Dim k As UInt32
 
 		'logI("开始 - 生成运动处方")
 
@@ -1138,16 +1153,18 @@ out:
 			content = excelWsTmpl.Range("E" & idx).Text
 			Dim item As String()
 			item = Strings.Split(content, Chr(10))
-			If item.Length > 3 Then
-				Dim tmp() As Int32 = {-1, -1, -1}
-				For j = 0 To 2
+			If item.Length > maxNumOfAdvise Then
+				Dim tmp(maxNumOfAdvise - 1) As Int32
+				For j = 0 To maxNumOfAdvise - 1
 					tmp(j) = Int(Rnd() * (item.Length - j))
 				Next
-				If tmp(1) >= tmp(0) Then tmp(1) += 1
-				If tmp(2) >= tmp(0) Then tmp(2) += 1
-				If tmp(2) >= tmp(1) Then tmp(2) += 1
-				logR(String.Format("随机项 {0} {1} {2}", tmp(0), tmp(1), tmp(2)))
-				For j = 0 To 2
+				For j = 1 To maxNumOfAdvise - 1
+					For k = 0 To j - 1
+						If tmp(j) >= tmp(k) Then tmp(j) += 1
+					Next
+				Next
+				'logR(String.Format("随机项 {0} {1} {2}", tmp(0), tmp(1), tmp(2)))
+				For j = 0 To maxNumOfAdvise - 1
 					wordDoc.Application.Selection.TypeText(j + 1 & ". " & item(tmp(j)))
 					wordDoc.Application.Selection.TypeParagraph()
 				Next
