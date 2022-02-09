@@ -540,6 +540,11 @@ out:
 				移动到下一行()
 				预取数据到缓存(excelWs)
 
+				If 获取当前行数据("姓名") = String.Empty Then
+					sendProgress(String.Format("共{0}个文件。当前处理第{1}个文件的第{2}行。处理完毕。", 共几个文件, 第几个文件, 当前行号))
+					Exit Do
+				End If
+
 				logR("当前行: " & 当前行号 & " 姓名 " & 获取当前行数据("姓名") & " 年级: " & 获取当前行数据("年级") & " 性别: " & 获取当前行数据("性别"))
 
 				计算类别()
@@ -814,6 +819,8 @@ out:
 	End Function
 
 	Function 生成首页()
+		Dim token As String
+
 		'logI("开始 - 生成首页")
 
 		' 学校名称
@@ -823,12 +830,22 @@ out:
 		' 学生姓名
 		学生姓名 = 获取当前行数据("姓名")
 
-		' 学校名称
-		wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(2).Range.Text = 学校名称
-		' 年级班级
-		wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(5).Range.Text = 年级班级
-		' 学生姓名
-		wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(8).Range.Text = 学生姓名
+		For i = 1 To wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs.Count
+			token = wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(i).Range.Text
+			If token.Length >= 4 Then
+				If token.Contains("XXMC") Then
+					' 学校名称
+					wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(i).Range.Text = 学校名称
+				ElseIf token.Contains("NJBJ") Then
+					' 年级班级
+					wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(i).Range.Text = 年级班级
+				ElseIf token.Contains("XSXM") Then
+					' 学生姓名
+					wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(i).Range.Text = 学生姓名
+				Else
+				End If
+			End If
+		Next
 
 		'logR("学校名称 " & 学校名称 & " 年级班级 " & 年级班级 & " 学生姓名 " & 学生姓名)
 
@@ -997,6 +1014,10 @@ out:
 
 	Function 格式化百分比(ByVal 百分比 As String)
 		Dim idx As Int32
+
+		If 百分比 = String.Empty Then
+			百分比 = "0"
+		End If
 
 		idx = Strings.InStr(百分比, ".")
 		If idx = 0 Then
@@ -1654,7 +1675,10 @@ out:
 			预取数据到缓存(excelWs)
 
 			' end of data
-			If 获取当前行数据("姓名") = String.Empty Then Exit Do
+			If 获取当前行数据("姓名") = String.Empty Then
+				logR(String.Format("生成第{0}行。结束。", 当前行号))
+				Exit Do
+			End If
 
 			' invalid grade
 			If Not 获取当前行数据("年级编号") < 100 Then GoTo rowComplete
