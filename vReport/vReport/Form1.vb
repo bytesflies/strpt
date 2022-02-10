@@ -344,7 +344,7 @@ retry:
 			Case "肥胖"
 				计算身体形态等级 = 3
 			Case Else
-				计算身体形态等级 = 1
+				计算身体形态等级 = 0
 		End Select
 		'logI("计算身体形态等级: " & 计算身体形态等级)
 	End Function
@@ -1171,13 +1171,18 @@ out:
 			'wordDoc.Application.Selection.Paragraphs.First.
 			wordDoc.Application.Selection.TypeParagraph()
 			wordDoc.Application.Selection.Style = "正文1"
-			content = excelWsTmpl.Range("E" & idx).Text
-			Dim item As String()
-			item = Strings.Split(content, Chr(10))
-			If item.Length > maxNumOfAdvise Then
+
+			Dim max As Int32 = 0
+
+			For j = 0 To 128
+				If excelWsTmpl.Cells(idx, 5 + j).Text = String.Empty Then Exit For
+				max += 1
+			Next
+
+			If max > maxNumOfAdvise Then
 				Dim tmp(maxNumOfAdvise - 1) As Int32
 				For j = 0 To maxNumOfAdvise - 1
-					tmp(j) = Int(Rnd() * (item.Length - j))
+					tmp(j) = Int(Rnd() * (max - j))
 				Next
 				For j = 1 To maxNumOfAdvise - 1
 					For k = 0 To j - 1
@@ -1186,12 +1191,12 @@ out:
 				Next
 				'logR(String.Format("随机项 {0} {1} {2}", tmp(0), tmp(1), tmp(2)))
 				For j = 0 To maxNumOfAdvise - 1
-					wordDoc.Application.Selection.TypeText(j + 1 & ". " & item(tmp(j)))
+					wordDoc.Application.Selection.TypeText(j + 1 & ". " & excelWsTmpl.Cells(idx, 5 + tmp(j)).Text)
 					wordDoc.Application.Selection.TypeParagraph()
 				Next
 			Else
-				For j = 0 To item.Length - 1
-					wordDoc.Application.Selection.TypeText(j + 1 & ". " & item(j))
+				For j = 0 To max - 1
+					wordDoc.Application.Selection.TypeText(j + 1 & ". " & excelWsTmpl.Cells(idx, 5 + j).Text)
 					wordDoc.Application.Selection.TypeParagraph()
 				Next
 			End If
@@ -2096,8 +2101,7 @@ rowComplete:
 				.arr(col + 0) = "X"
 				.arr(col + 1) = "X"
 				.arr(col + 2) = "X"
-				' 低体重
-				各身体形态计数(1) += 1
+				各身体形态计数(计算身体形态等级("未知")) += 1
 			End If
 			col = col + 3
 
