@@ -54,6 +54,15 @@ Public Class Form1
 	  5, 0, 1, 8, 5, 7, _
 	  5, 0, 1, 3, 5, 6, _
 	  5, 0, 1, 8, 5, 7}
+	Dim 学生测试项附加分信息() As UInt32 = { _
+	  3, 0, 0, 1, 0, 0, _
+	  4, 0, 0, 0, 1, 0, _
+	  5, 0, 0, 0, 1, 0, _
+	  5, 0, 0, 0, 1, 0, _
+	  5, 0, 0, 1, 0, 1, _
+	  5, 0, 0, 1, 0, 1, _
+	  5, 0, 0, 1, 0, 1, _
+	  5, 0, 0, 1, 0, 1}
 
 	' 当前信息
 
@@ -936,12 +945,12 @@ out:
 			wordDoc.Tables(表格位置).Cell(3 + i, 4).Range.Text = 内容
 
 			内容 = 获取当前行数据(测项附加分起始列号 + 2 * 测项序号)
-			If 内容 = "1" Then
+			If 学生测试项附加分信息(idx + i) <> 0 Then
 				内容 = 获取当前行数据(测项附加分起始列号 + 2 * 测项序号 + 1)
 				If 内容 <> "" And 内容 <> "0" Then
 					wordDoc.Tables(表格位置).Cell(3 + i, 5).Range.Text = 内容
 				Else
-					wordDoc.Tables(表格位置).Cell(3 + i, 5).Range.Text = "/"
+					wordDoc.Tables(表格位置).Cell(3 + i, 5).Range.Text = "0"
 				End If
 			Else
 				wordDoc.Tables(表格位置).Cell(3 + i, 5).Range.Text = "/"
@@ -1063,7 +1072,7 @@ out:
 	End Function
 
 	Function 生成运动处方()
-		Dim content As String
+		'Dim content As String
 		Dim idx As UInt32
 		Dim i As UInt32
 		Dim j As UInt32
