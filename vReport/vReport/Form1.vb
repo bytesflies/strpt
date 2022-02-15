@@ -889,6 +889,7 @@ out:
 		Dim 内容 As String
 		Dim idx As UInt32 = 0
 		Dim i As UInt32 = 0
+		Dim j As UInt32 = 0
 
 		'logI("开始 - 生成单项指标")
 
@@ -930,7 +931,17 @@ out:
 			wordDoc.Tables(表格位置).Cell(3 + i, 1).Range.Text = 内容
 
 			内容 = 获取当前行数据(测项起始列号 + 3 * 测项序号 + 0)
-			If 内容 = "X" Then 内容 = ""
+			If 内容 = "X" Then
+				内容 = ""
+			Else
+				' to '
+				内容 = 内容.Replace(Convert.ToChar(8216), Convert.ToChar(39))
+				内容 = 内容.Replace(Convert.ToChar(8242), Convert.ToChar(39))
+			End If
+			'Dim a As Int32
+			'Dim b As Int32
+			'a = Convert.ToInt32(内容(1))
+			'b = Convert.ToInt32("'"(0))
 			'logW(内容)
 			wordDoc.Tables(表格位置).Cell(3 + i, 2).Range.Text = 内容
 
