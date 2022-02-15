@@ -125,8 +125,12 @@ Public Class Form1
 
 	Dim maxNumOfAdvise As Int32 = 6
 
+	Dim useClipboard = 1
+
 	' 日志
 	Dim logger As StreamWriter
+
+	Dim tmpName As String
 
 	Private Sub 装载应用()
 		logW("装载应用")
@@ -509,6 +513,11 @@ out:
 			GoTo out
 		End If
 
+		If useClipboard = 0 Then
+			tmpName = System.IO.Path.GetTempFileName()
+			logR("获取临时文件: " & tmpName)
+		End If
+
 		' 处理Exccel，生成报表
 
 		列名转列号表.Clear()
@@ -585,6 +594,16 @@ out:
 			excelWb.Close(Excel.XlSaveAction.xlDoNotSaveChanges)
 			excelWb = Nothing
 		End If
+		If useClipboard = 0 Then
+			Try
+				If File.Exists(tmpName) Then
+					File.Delete(tmpName)
+					logR("删除临时文件: " & tmpName)
+				End If
+			Catch ex As Exception
+				logR("删除临时文件失败: " & tmpName)
+			End Try
+		End If
 		logI("结束 - 处理数据 " & 待处理文件)
 	End Sub
 
@@ -654,6 +673,8 @@ out:
 		Dim m As Int32
 
 		转pdf = 0
+		useClipboard = 1
+		maxNumOfAdvise = 6
 		列重命名0.Clear()
 		列重命名1.Clear()
 		学校转学区表.Clear()
@@ -694,6 +715,11 @@ out:
 							maxNumOfAdvise = 6
 						End If
 					End If
+					Continue While
+				End If
+				If a(0) = "noClipboard" Then
+					m = 0
+					useClipboard = 0
 					Continue While
 				End If
 
@@ -995,9 +1021,13 @@ out:
 				图表工作表.Cells(2 + i, 2).Value2 = 获取当前行数据(测项起始列号 + 3 * 测项序号 + 1)
 			Next
 
-			图表工作表.Shapes.SelectAll()
-			'图表工作表.Activate()
-			图表工作表.Application.Selection.copy()
+			If useClipboard = 0 Then
+				Dim ct As Excel.Chart = 图表工作表.ChartObjects(1).Chart
+				ct.Export(tmpName, "GIF")
+			Else
+				图表工作表.Shapes.SelectAll()
+				图表工作表.Application.Selection.copy()
+			End If
 		Catch e As Exception
 			logE("生成各指标得分图表:" & e.Message)
 			logE(e.StackTrace)
@@ -1005,12 +1035,15 @@ out:
 			GoTo out
 		End Try
 
-		'excelWb.Activate()
 		wordDoc.Tables(表格位置).Select()
 		wordDoc.Application.Selection.MoveDown()
 		' 多塞个空行
 		wordDoc.Application.Selection.TypeParagraph()
-		wordDoc.Application.Selection.PasteAndFormat(Word.WdRecoveryType.wdChartPicture)
+		If useClipboard = 0 Then
+			wordDoc.Application.Selection.InlineShapes.AddPicture(tmpName, False, True)
+		Else
+			wordDoc.Application.Selection.PasteAndFormat(Word.WdRecoveryType.wdChartPicture)
+		End If
 
 out:
 		'logI("结束 - 生成各指标得分图表")
