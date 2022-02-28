@@ -87,6 +87,9 @@ Public Class Form1
 
 	Dim st As Student
 
+	Dim 全区统计信息 As 统计信息
+	Dim 学校统计信息 As Dictionary(Of String, 统计信息) = New Dictionary(Of String, 统计信息)
+
 	' 资源信息
 	Dim wkType As Int32
 	Dim wk As Thread
@@ -454,6 +457,78 @@ out:
 		计算学校整体情况 = 0
 	End Function
 
+	Private Sub 生成学校报告(ByVal 共几个文件 As UInt32, ByVal 第几个文件 As UInt32, ByRef excelWs As Excel.Worksheet)
+		' 处理Excel，生成报表
+
+		'		学校统计信息.Clear()
+		'		全区统计信息 = New 统计信息()
+
+		'		列名转列号表.Clear()
+		'		当前行号 = 1
+		'		已经读取的行数 = 0
+		'		预取数据到缓存(excelWs)
+		'		生成列信息表格(列重命名1)
+
+		'		If excelWbTmpl Is Nothing Then
+		'			Try
+		'				excelWbTmpl = excelApp.Workbooks.Add(Application.StartupPath & "\Tmpl.xlsx")
+		'			Catch e As Exception
+		'				logE("打开Excel模板: " & e.Message)
+		'				logE(e.StackTrace)
+		'				'MsgBox("打开Excel模板: " & e.Message)
+		'				GoTo out
+		'			End Try
+		'		End If
+
+		'		测项起始列号 = 0
+		'		测项附加分起始列号 = 0
+
+		'		If 列名转列号表.ContainsKey("50米跑成绩") Then
+		'			测项起始列号 = 列名转列号表("50米跑成绩")
+		'		End If
+		'		If 列名转列号表.ContainsKey("是否有50米跑") Then
+		'			测项附加分起始列号 = 列名转列号表("是否有50米跑")
+		'		End If
+
+		'		If 测项起始列号 = 0 Or 测项附加分起始列号 = 0 Then
+		'			logE("测项起始列号 " & 测项起始列号 & " 测项附加分起始列号 " & 测项附加分起始列号)
+		'		End If
+
+		'		Try
+		'			计算学校整体情况()
+
+		'			Do While True
+		'				移动到下一行()
+		'				预取数据到缓存(excelWs)
+
+		'				If 获取当前行数据("姓名") = String.Empty Then
+		'					sendProgress(String.Format("共{0}个文件。当前处理第{1}个文件的第{2}行。处理完毕。", 共几个文件, 第几个文件, 当前行号))
+		'					Exit Do
+		'				End If
+
+		'				logR("当前行: " & 当前行号 & " 姓名 " & 获取当前行数据("姓名") & " 年级: " & 获取当前行数据("年级") & " 性别: " & 获取当前行数据("性别"))
+
+		'				计算类别()
+
+		'				打开报告()
+
+		'				生成报告()
+
+		'				关闭报告()
+
+		'				sendProgress(String.Format("共{0}个文件。当前处理第{1}个文件的第{2}行", 共几个文件, 第几个文件, 当前行号))
+
+		'				purgeAsync()
+
+		'				If wkExiting Then Exit Do
+		'			Loop
+		'		Catch e As Exception
+		'			logE("处理数据:" & e.Message)
+		'			logE(e.StackTrace)
+		'		End Try
+		'out:
+	End Sub
+
 	Private Sub 处理数据(ByVal 共几个文件 As UInt32, ByVal 第几个文件 As UInt32, ByRef 待处理文件 As String)
 		Dim 生成何种数据 As Int32 = -1
 
@@ -470,6 +545,10 @@ out:
 				End If
 				If wkType = 1 And excelWs.Range("C1").Text = "ID" Then
 					生成何种数据 = 1
+					Exit For
+				End If
+				If wkType = 2 And excelWs.Range("C1").Text = "ID" Then
+					生成何种数据 = 2
 					Exit For
 				End If
 			Next
@@ -513,12 +592,25 @@ out:
 			GoTo out
 		End If
 
+		' 学校报告
+		If 生成何种数据 = 2 Then
+			Try
+				' Entry
+				生成学校报告(共几个文件, 第几个文件, excelWs)
+			Catch e As Exception
+				logE("处理Excel数据: " & e.Message)
+				logE("处理Excel数据: " & e.StackTrace)
+			End Try
+
+			GoTo out
+		End If
+
 		If useClipboard = 0 Then
 			tmpName = System.IO.Path.GetTempFileName()
 			logR("获取临时文件: " & tmpName)
 		End If
 
-		' 处理Exccel，生成报表
+		' 处理Excel，生成报表
 
 		列名转列号表.Clear()
 		当前行号 = 1
@@ -2986,6 +3078,10 @@ found:
 
 	Private Sub Button4_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button4.Click
 		RichTextBox1.Text = ""
+	End Sub
+
+	Private Sub Button5_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button5.Click
+		点击事件(2)
 	End Sub
 End Class
 

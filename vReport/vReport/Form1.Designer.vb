@@ -28,6 +28,7 @@ Partial Class Form1
 		Me.Button3 = New System.Windows.Forms.Button
 		Me.Label1 = New System.Windows.Forms.Label
 		Me.Button4 = New System.Windows.Forms.Button
+		Me.Button5 = New System.Windows.Forms.Button
 		Me.SuspendLayout()
 		'
 		'Button1
@@ -36,7 +37,7 @@ Partial Class Form1
 		Me.Button1.Name = "Button1"
 		Me.Button1.Size = New System.Drawing.Size(71, 28)
 		Me.Button1.TabIndex = 0
-		Me.Button1.Text = "生成数据"
+		Me.Button1.Text = "计算成绩"
 		Me.Button1.UseVisualStyleBackColor = True
 		'
 		'RichTextBox1
@@ -54,11 +55,11 @@ Partial Class Form1
 		'
 		'Button2
 		'
-		Me.Button2.Location = New System.Drawing.Point(169, 12)
+		Me.Button2.Location = New System.Drawing.Point(249, 12)
 		Me.Button2.Name = "Button2"
 		Me.Button2.Size = New System.Drawing.Size(71, 28)
-		Me.Button2.TabIndex = 2
-		Me.Button2.Text = "停止生成"
+		Me.Button2.TabIndex = 3
+		Me.Button2.Text = "停止处理"
 		Me.Button2.UseVisualStyleBackColor = True
 		'
 		'Button3
@@ -67,7 +68,7 @@ Partial Class Form1
 		Me.Button3.Name = "Button3"
 		Me.Button3.Size = New System.Drawing.Size(75, 28)
 		Me.Button3.TabIndex = 1
-		Me.Button3.Text = "生成报告"
+		Me.Button3.Text = "学生报告"
 		Me.Button3.UseVisualStyleBackColor = True
 		'
 		'Label1
@@ -81,18 +82,28 @@ Partial Class Form1
 		'
 		'Button4
 		'
-		Me.Button4.Location = New System.Drawing.Point(245, 12)
+		Me.Button4.Location = New System.Drawing.Point(325, 12)
 		Me.Button4.Name = "Button4"
 		Me.Button4.Size = New System.Drawing.Size(71, 28)
 		Me.Button4.TabIndex = 4
 		Me.Button4.Text = "清空日志"
 		Me.Button4.UseVisualStyleBackColor = True
 		'
+		'Button5
+		'
+		Me.Button5.Location = New System.Drawing.Point(169, 12)
+		Me.Button5.Name = "Button5"
+		Me.Button5.Size = New System.Drawing.Size(75, 28)
+		Me.Button5.TabIndex = 2
+		Me.Button5.Text = "学校报告"
+		Me.Button5.UseVisualStyleBackColor = True
+		'
 		'Form1
 		'
 		Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 12.0!)
 		Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
 		Me.ClientSize = New System.Drawing.Size(909, 531)
+		Me.Controls.Add(Me.Button5)
 		Me.Controls.Add(Me.Button4)
 		Me.Controls.Add(Me.Label1)
 		Me.Controls.Add(Me.Button3)
@@ -111,5 +122,6 @@ Partial Class Form1
 	Friend WithEvents Button3 As System.Windows.Forms.Button
 	Friend WithEvents Label1 As System.Windows.Forms.Label
 	Friend WithEvents Button4 As System.Windows.Forms.Button
+	Friend WithEvents Button5 As System.Windows.Forms.Button
 
 End Class
