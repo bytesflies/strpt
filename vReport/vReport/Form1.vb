@@ -87,7 +87,21 @@ Public Class Form1
 
 	Dim st As Student
 
-	Dim 全区统计信息 As 统计信息
+	Dim 学校统计项() As 统计项 = { _
+	   New 统计项(0, 0, "综合评定"), _
+	   New 统计项(1, 1, "身高体重等级"), _
+	   New 统计项(0, 2, "肺活量等级"), _
+	   New 统计项(0, 3, "50米跑等级"), _
+	   New 统计项(0, 4, "坐位体前屈等级"), _
+	   New 统计项(0, 5, "一分钟跳绳等级"), _
+	   New 统计项(0, 6, "一分钟仰卧起坐等级"), _
+	   New 统计项(0, 7, "50米×8往返跑等级"), _
+	   New 统计项(0, 8, "立定跳远等级"), _
+	   New 统计项(0, 9, "800米跑等级"), _
+	   New 统计项(0, 10, "1000米跑等级"), _
+	   New 统计项(0, 11, "引体向上等级") _
+	}
+	Dim 全区统计信息 As 统计信息 = New 统计信息()
 	Dim 学校统计信息 As Dictionary(Of String, 统计信息) = New Dictionary(Of String, 统计信息)
 
 	' 资源信息
@@ -121,6 +135,7 @@ Public Class Form1
 
 	Dim 列重命名0 As Dictionary(Of String, String)
 	Dim 列重命名1 As Dictionary(Of String, String)
+	Dim 列重命名2 As Dictionary(Of String, String)
 	Dim 学校转学区表 As Dictionary(Of String, String)
 	Dim 列名转列号表 As Dictionary(Of String, UInt32)
 
@@ -457,76 +472,91 @@ out:
 		计算学校整体情况 = 0
 	End Function
 
+	Private Sub 处理单项等级(ByRef 项 As 统计项, ByVal 学段 As UInt32, ByRef 信息 As 统计信息)
+		Dim 等级 As UInt32
+		If 项.类型 = 0 Then
+			等级 = 计算等级(获取当前行数据(项.名称))
+		Else
+			等级 = 计算身体形态等级(获取当前行数据(项.名称))
+		End If
+		信息.等级(项.序号, 0, 等级) += 1
+		信息.等级(项.序号, 3, 等级) += 1
+	End Sub
+
+	Private Sub 处理统计信息(ByRef 信息 As 统计信息)
+		信息.报名人数 += 1
+		If 获取当前行数据("是否参测") = "是" Then
+			信息.参测人数 += 1
+			If 获取当前行数据("缺项数量") = "0" Then
+				信息.完测人数 += 1
+			End If
+		End If
+		If 获取当前行数据("附加分") <> String.Empty And 获取当前行数据("附加分") <> "0" Then
+			信息.加分人数 += 1
+		End If
+
+		Dim 学段 As UInt32
+		Select Case 获取当前行数据("学段")
+			Case "小学"
+				学段 = 0
+			Case "初中"
+				学段 = 1
+			Case "高中"
+				学段 = 2
+			Case Else
+				学段 = 0
+		End Select
+
+		Dim i As UInt32
+		For i = 0 To 学校统计项.Count() - 1
+			处理单项等级(学校统计项(i), 学段, 信息)
+		Next
+	End Sub
+
 	Private Sub 生成学校报告(ByVal 共几个文件 As UInt32, ByVal 第几个文件 As UInt32, ByRef excelWs As Excel.Worksheet)
 		' 处理Excel，生成报表
 
-		'		学校统计信息.Clear()
-		'		全区统计信息 = New 统计信息()
+		列名转列号表.Clear()
+		当前行号 = 1
+		已经读取的行数 = 0
+		预取数据到缓存(excelWs)
+		生成列信息表格(列重命名2)
 
-		'		列名转列号表.Clear()
-		'		当前行号 = 1
-		'		已经读取的行数 = 0
-		'		预取数据到缓存(excelWs)
-		'		生成列信息表格(列重命名1)
+		Try
+			Do While True
+				移动到下一行()
+				预取数据到缓存(excelWs)
 
-		'		If excelWbTmpl Is Nothing Then
-		'			Try
-		'				excelWbTmpl = excelApp.Workbooks.Add(Application.StartupPath & "\Tmpl.xlsx")
-		'			Catch e As Exception
-		'				logE("打开Excel模板: " & e.Message)
-		'				logE(e.StackTrace)
-		'				'MsgBox("打开Excel模板: " & e.Message)
-		'				GoTo out
-		'			End Try
-		'		End If
+				If 获取当前行数据("姓名") = String.Empty Then
+					sendProgress(String.Format("共{0}个文件。当前处理第{1}个文件的第{2}行。处理完毕。", 共几个文件, 第几个文件, 当前行号))
+					Exit Do
+				End If
 
-		'		测项起始列号 = 0
-		'		测项附加分起始列号 = 0
+				'logR("当前行: " & 当前行号 & " 姓名 " & 获取当前行数据("姓名") & " 年级: " & 获取当前行数据("年级") & " 性别: " & 获取当前行数据("性别"))
+				Dim 学校名称 As String
+				学校名称 = 获取当前行数据("学校")
+				If 学校名称 = String.Empty Then
+					logR("非法的学校名称")
+					Continue Do
+				End If
 
-		'		If 列名转列号表.ContainsKey("50米跑成绩") Then
-		'			测项起始列号 = 列名转列号表("50米跑成绩")
-		'		End If
-		'		If 列名转列号表.ContainsKey("是否有50米跑") Then
-		'			测项附加分起始列号 = 列名转列号表("是否有50米跑")
-		'		End If
+				处理统计信息(全区统计信息)
+				If Not 学校统计信息.ContainsKey(学校名称) Then
+					学校统计信息.Add(学校名称, New 统计信息())
+				End If
+				处理统计信息(学校统计信息(学校名称))
 
-		'		If 测项起始列号 = 0 Or 测项附加分起始列号 = 0 Then
-		'			logE("测项起始列号 " & 测项起始列号 & " 测项附加分起始列号 " & 测项附加分起始列号)
-		'		End If
+				sendProgress(String.Format("共{0}个文件。当前处理第{1}个文件的第{2}行", 共几个文件, 第几个文件, 当前行号))
 
-		'		Try
-		'			计算学校整体情况()
+				purgeAsync()
 
-		'			Do While True
-		'				移动到下一行()
-		'				预取数据到缓存(excelWs)
-
-		'				If 获取当前行数据("姓名") = String.Empty Then
-		'					sendProgress(String.Format("共{0}个文件。当前处理第{1}个文件的第{2}行。处理完毕。", 共几个文件, 第几个文件, 当前行号))
-		'					Exit Do
-		'				End If
-
-		'				logR("当前行: " & 当前行号 & " 姓名 " & 获取当前行数据("姓名") & " 年级: " & 获取当前行数据("年级") & " 性别: " & 获取当前行数据("性别"))
-
-		'				计算类别()
-
-		'				打开报告()
-
-		'				生成报告()
-
-		'				关闭报告()
-
-		'				sendProgress(String.Format("共{0}个文件。当前处理第{1}个文件的第{2}行", 共几个文件, 第几个文件, 当前行号))
-
-		'				purgeAsync()
-
-		'				If wkExiting Then Exit Do
-		'			Loop
-		'		Catch e As Exception
-		'			logE("处理数据:" & e.Message)
-		'			logE(e.StackTrace)
-		'		End Try
-		'out:
+				If wkExiting Then Exit Do
+			Loop
+		Catch e As Exception
+			logE("处理数据:" & e.Message)
+			logE(e.StackTrace)
+		End Try
+out:
 	End Sub
 
 	Private Sub 处理数据(ByVal 共几个文件 As UInt32, ByVal 第几个文件 As UInt32, ByRef 待处理文件 As String)
@@ -1386,6 +1416,7 @@ out:
 
 		列重命名0 = New Dictionary(Of String, String)
 		列重命名1 = New Dictionary(Of String, String)
+		列重命名2 = New Dictionary(Of String, String)
 		学校转学区表 = New Dictionary(Of String, String)
 		列名转列号表 = New Dictionary(Of String, UInt32)
 
