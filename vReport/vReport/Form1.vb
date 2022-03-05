@@ -481,7 +481,7 @@ out:
 		Else
 			等级 = 计算身体形态等级(获取当前行数据(项.名称))
 		End If
-		信息.等级(项.序号, 0, 等级) += 1
+		信息.等级(项.序号, 学段, 等级) += 1
 		信息.等级(项.序号, 3, 等级) += 1
 	End Sub
 
@@ -838,8 +838,10 @@ out:
 			处理学校百分比(全区统计信息)
 			Dim i As UInt32
 			For i = 0 To 学校统计信息.Count - 1
+				sendProgress(String.Format("文件 {0}/{1}，学校 {2}/{3} *", 第几个文件, 共几个文件, i + 1, 学校统计信息.Count))
 				处理学校百分比(学校统计信息.ElementAt(i).Value)
 				生成单个学校报告(学校统计信息.ElementAt(i).Key, 学校统计信息.ElementAt(i).Value, 全区统计信息)
+				sendProgress(String.Format("文件 {0}/{1}，学校 {2}/{3}", 第几个文件, 共几个文件, i + 1, 学校统计信息.Count))
 				'Exit For
 			Next
 		Catch e As Exception
