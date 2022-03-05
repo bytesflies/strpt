@@ -131,7 +131,7 @@ Public Class Form1
 
 	' 配置
 	Dim displayExcel As Boolean = False
-	Dim displayWord As Boolean = True
+	Dim displayWord As Boolean = False
 
 	Dim 列重命名0 As Dictionary(Of String, String)
 	Dim 列重命名1 As Dictionary(Of String, String)
@@ -591,6 +591,100 @@ out:
 		关闭学校报告 = 0
 	End Function
 
+	Private Sub 搜索(ByRef 关键字 As String)
+		Dim wordFind As Word.Find
+		wordFind = wordDoc.Application.Selection.Find
+		wordFind.ClearFormatting()
+		wordFind.Text = 关键字
+		wordFind.Replacement.Text = ""
+		wordFind.Forward = True
+		wordFind.Wrap = Word.WdFindWrap.wdFindContinue
+		wordFind.Format = False
+		wordFind.MatchCase = False
+		wordFind.MatchWholeWord = False
+		wordFind.MatchByte = True
+		wordFind.MatchWildcards = False
+		wordFind.MatchSoundsLike = False
+		wordFind.MatchAllWordForms = False
+		wordDoc.Application.Selection.Find.Execute()
+	End Sub
+
+	Private Function 比较(ByVal x As UInt32, ByVal y As UInt32)
+		If x > y Then
+			比较 = "大于"
+		ElseIf x < y Then
+			比较 = "小于"
+		Else
+			比较 = "等于"
+		End If
+	End Function
+
+	Private Sub 生成单个学校测试结果分析文本(ByRef 学校名称 As String, ByRef 学校信息 As 统计信息, ByRef 学区信息 As 统计信息, ByRef 关键字 As String, ByRef 名称 As String, ByVal 项目 As UInt32)
+		Dim x() As UInt32 = {0, 0, 0, 0, 0, 0, 0, 0}
+
+		搜索(关键字)
+		x(0) = 学校信息.百分比(项目, 3, 0)
+		x(1) = 学区信息.百分比(项目, 3, 0)
+		x(2) = 学校信息.百分比(项目, 3, 3)
+		x(3) = 学区信息.百分比(项目, 3, 3)
+		wordDoc.Application.Selection.Paragraphs.First.Range.Text = ""
+		wordDoc.Application.Selection.Style = "测试结果分析文本"
+		wordDoc.Application.Selection.TypeText(String.Format("{0}测试情况反馈，本校处于优秀等级的学生占比（{1}），{2}总体测试数据平均水平（{3}）。本校处于不及格等级的学生占比（{4}），{5}总体测试数据平均水平（{6}）。", _
+		  名称, 转换百分比(x(0)), 比较(x(0), x(1)), 转换百分比(x(1)), 转换百分比(x(2)), 比较(x(2), x(3)), 转换百分比(x(3))))
+
+	End Sub
+
+	Private Sub 生成单个学校测试结果分析(ByRef 学校名称 As String, ByRef 学校信息 As 统计信息, ByRef 学区信息 As 统计信息)
+		'Dim content As String
+		Dim x() As UInt32 = {0, 0, 0, 0, 0, 0, 0, 0}
+		'Dim d(7) As String
+
+		搜索("结果综述")
+		x(0) = 学校信息.百分比(0, 3, 0) + 学校信息.百分比(0, 3, 1)
+		x(1) = 学区信息.百分比(0, 3, 0) + 学区信息.百分比(0, 3, 1)
+		x(2) = 学校信息.百分比(0, 3, 3)
+		x(3) = 学区信息.百分比(0, 3, 3)
+		wordDoc.Application.Selection.Paragraphs.First.Range.Text = ""
+		wordDoc.Application.Selection.Style = "测试结果分析综述"
+		wordDoc.Application.Selection.TypeText(String.Format("本次体质健康标准测试情况反馈，{0}的学生综合成绩优良率（{1}），{2}总体测试数据平均水平（{3}）。学生综合成绩不及格率（{4}），{5}总体测试数据平均水平（{6}）。本校整体情况处于{7}水平。", _
+		  学校名称, 转换百分比(x(0)), 比较(x(0), x(1)), 转换百分比(x(1)), 转换百分比(x(2)), 比较(x(2), x(3)), 转换百分比(x(3)), "中上"))
+
+		搜索("身体形态综述")
+		x(0) = 学校信息.百分比(1, 3, 0)
+		x(1) = 学区信息.百分比(1, 3, 0)
+		x(2) = 学校信息.百分比(1, 3, 1)
+		x(3) = 学区信息.百分比(1, 3, 1)
+		x(4) = 学校信息.百分比(1, 3, 2)
+		x(5) = 学区信息.百分比(1, 3, 2)
+		x(6) = 学校信息.百分比(1, 3, 3)
+		x(7) = 学区信息.百分比(1, 3, 3)
+		wordDoc.Application.Selection.Paragraphs.First.Range.Text = ""
+		wordDoc.Application.Selection.Style = "测试结果分析综述"
+		wordDoc.Application.Selection.TypeText(String.Format("体重指数测试情况反馈，本校处于正常体重水平的学生占比（{0}），{1}总体测试数据平均水平（{2}）。本校处于低体重水平的学生占比（{3}），{4}总体测试数据平均水平（{5}）。本校处于超重水平的学生占比（{6}），{7}总体测试数据平均水平（{8}）。本校处于肥胖水平的学生占比（{9}），{10}总体测试数据平均水平（{11}）。", _
+		  转换百分比(x(0)), 比较(x(0), x(1)), 转换百分比(x(1)), 转换百分比(x(2)), 比较(x(2), x(3)), 转换百分比(x(3)), _
+		  转换百分比(x(4)), 比较(x(4), x(5)), 转换百分比(x(5)), 转换百分比(x(6)), 比较(x(6), x(7)), 转换百分比(x(7))))
+
+		搜索("身体机能综述")
+		x(0) = 学校信息.百分比(2, 3, 0)
+		x(1) = 学区信息.百分比(2, 3, 0)
+		x(2) = 学校信息.百分比(2, 3, 3)
+		x(3) = 学区信息.百分比(2, 3, 3)
+		wordDoc.Application.Selection.Paragraphs.First.Range.Text = ""
+		wordDoc.Application.Selection.Style = "测试结果分析综述"
+		wordDoc.Application.Selection.TypeText(String.Format("肺活量测试情况反馈，本校处于优秀等级的学生占比（{0}），{1}总体测试数据平均水平（{2}）。本校处于不及格等级的学生占比（{3}），{4}总体测试数据平均水平（{5}）。", _
+		  转换百分比(x(0)), 比较(x(0), x(1)), 转换百分比(x(1)), 转换百分比(x(2)), 比较(x(2), x(3)), 转换百分比(x(3))))
+
+		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, "速度素质文本", "50米跑", 3)
+		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, "柔韧素质文本", "坐位体前屈", 4)
+		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, "力量素质文本1", "1分钟仰卧起坐", 6)
+		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, "力量素质文本2", "引体向上等级", 11)
+		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, "协调素质文本", "1分钟跳绳", 5)
+		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, "耐力素质文本小", "50米x8往返跑", 7)
+		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, "耐力素质文本女", "800米跑", 9)
+		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, "耐力素质文本男", "1000米跑", 10)
+		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, "爆发力素质文本", "立定跳远", 8)
+	End Sub
+
 	Private Sub 生成单个学校报告(ByRef 学校名称 As String, ByRef 学校信息 As 统计信息, ByRef 学区信息 As 统计信息)
 		Dim i As Int32
 		Dim j As Int32
@@ -603,6 +697,7 @@ out:
 			content = wordDoc.Paragraphs(i).Range.Text()
 			If content.Contains("学校名称") Then
 				wordDoc.Paragraphs(i).Range.Text = 学校名称
+				wordDoc.Paragraphs(i).Style = "学校名称"
 				wordDoc.Paragraphs(i).Format.Alignment = Word.WdParagraphAlignment.wdAlignParagraphRight
 				Exit For
 			End If
@@ -692,6 +787,8 @@ out:
 			End If
 		Next
 
+		生成单个学校测试结果分析(学校名称, 学校信息, 学区信息)
+
 		关闭学校报告(学校名称)
 	End Sub
 
@@ -743,7 +840,7 @@ out:
 			For i = 0 To 学校统计信息.Count - 1
 				处理学校百分比(学校统计信息.ElementAt(i).Value)
 				生成单个学校报告(学校统计信息.ElementAt(i).Key, 学校统计信息.ElementAt(i).Value, 全区统计信息)
-				Exit For
+				'Exit For
 			Next
 		Catch e As Exception
 			logE("处理数据:" & e.Message)
