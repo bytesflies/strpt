@@ -88,18 +88,18 @@ Public Class Form1
 	Dim st As Student
 
 	Dim 学校统计项() As 统计项 = { _
-	   New 统计项(0, 0, "综合评定"), _
-	   New 统计项(1, 1, "身高体重等级"), _
-	   New 统计项(0, 2, "肺活量等级"), _
-	   New 统计项(0, 3, "50米跑等级"), _
-	   New 统计项(0, 4, "坐位体前屈等级"), _
-	   New 统计项(0, 5, "一分钟跳绳等级"), _
-	   New 统计项(0, 6, "一分钟仰卧起坐等级"), _
-	   New 统计项(0, 7, "50米×8往返跑等级"), _
-	   New 统计项(0, 8, "立定跳远等级"), _
-	   New 统计项(0, 9, "800米跑等级"), _
-	   New 统计项(0, 10, "1000米跑等级"), _
-	   New 统计项(0, 11, "引体向上等级") _
+	   New 统计项(0, 0, "综合评定", New Int32() {1, 1, 1, 1}, "总校小优"), _
+	   New 统计项(1, 1, "身高体重等级", New Int32() {1, 1, 1, 1}, "形校小优"), _
+	   New 统计项(0, 2, "肺活量等级", New Int32() {1, 1, 1, 1}, "肺校小优"), _
+	   New 统计项(0, 3, "50米跑等级", New Int32() {1, 1, 1, 1}, "A50校小优"), _
+	   New 统计项(0, 4, "坐位体前屈等级", New Int32() {1, 1, 1, 1}, "屈校小优"), _
+	   New 统计项(0, 5, "一分钟跳绳等级", New Int32() {1, 0, 0, 1}, "绳校小优"), _
+	   New 统计项(0, 6, "一分钟仰卧起坐等级", New Int32() {1, 1, 1, 1}, "卧校小优"), _
+	   New 统计项(0, 7, "50米×8往返跑等级", New Int32() {1, 0, 0, 1}, "A8校小优"), _
+	   New 统计项(0, 8, "立定跳远等级", New Int32() {0, 1, 1, 1}, "立校初优"), _
+	   New 统计项(0, 9, "800米跑等级", New Int32() {0, 1, 1, 1}, "A800校初优"), _
+	   New 统计项(0, 10, "1000米跑等级", New Int32() {0, 1, 1, 1}, "A1000校初优"), _
+	   New 统计项(0, 11, "引体向上等级", New Int32() {0, 1, 1, 1}, "引校初优") _
 	}
 	Dim 全区统计信息 As 统计信息 = New 统计信息()
 	Dim 学校统计信息 As Dictionary(Of String, 统计信息) = New Dictionary(Of String, 统计信息)
@@ -131,7 +131,7 @@ Public Class Form1
 
 	' 配置
 	Dim displayExcel As Boolean = False
-	Dim displayWord As Boolean = False
+	Dim displayWord As Boolean = True
 
 	Dim 列重命名0 As Dictionary(Of String, String)
 	Dim 列重命名1 As Dictionary(Of String, String)
@@ -384,6 +384,7 @@ retry:
 		Dim 百分比和 As UInt32 = 0
 		Dim 总和 As UInt32 = 0
 		Dim 余数(3) As UInt32
+		Dim 系数 As UInt64 = 100000
 		Dim idx As Int32
 		Dim max As UInt32
 		Dim i As UInt32
@@ -400,7 +401,7 @@ retry:
 
 		百分比和 = 0
 		For i = 0 To 3
-			百分比(i) = Int(100000 * (计数(i)) / 总和)
+			百分比(i) = Int(系数 * (计数(i)) / 总和)
 			余数(i) = 百分比(i) Mod 10
 			百分比(i) = Int(百分比(i) / 10)
 		Next
@@ -474,6 +475,7 @@ out:
 
 	Private Sub 处理单项等级(ByRef 项 As 统计项, ByVal 学段 As UInt32, ByRef 信息 As 统计信息)
 		Dim 等级 As UInt32
+		If 项.学段(学段) = 0 Then Exit Sub
 		If 项.类型 = 0 Then
 			等级 = 计算等级(获取当前行数据(项.名称))
 		Else
@@ -513,8 +515,191 @@ out:
 		Next
 	End Sub
 
+	Private Sub 处理学校百分比(ByRef 信息 As 统计信息)
+		Dim 源(3) As UInt32
+		Dim 目(3) As UInt32
+
+		源(2) = 0
+		源(3) = 0
+
+		源(0) = 信息.参测人数
+		源(1) = 信息.报名人数 - 信息.参测人数
+		计算百分比(源, 目)
+		信息.参测比例 = 目(0)
+		源(0) = 信息.完测人数
+		源(1) = 信息.报名人数 - 信息.完测人数
+		计算百分比(源, 目)
+		信息.完测比例 = 目(0)
+
+		Dim i As UInt32
+		Dim j As UInt32
+		Dim k As UInt32
+
+		For i = 0 To 11
+			For j = 0 To 3
+				For k = 0 To 3
+					源(k) = 信息.等级(i, j, k)
+				Next
+				计算百分比(源, 目)
+				For k = 0 To 3
+					信息.百分比(i, j, k) = 目(k)
+				Next
+			Next
+		Next
+	End Sub
+
+	Function 打开学校报告(ByRef 学校 As String)
+		Dim docFullName As String
+		Dim docPath As String
+
+		'logW("开始 - 打开报告")
+
+		docPath = Application.StartupPath & "\" & 学校
+		'If Not Directory.Exists(docPath) Then Directory.CreateDirectory(docPath)
+		docFullName = docPath & ".docx"
+
+		logW("打开报告模板")
+		wordDoc = wordApp.Documents.Add(Application.StartupPath & "\学校报告模板.docx")
+		logW("保存报告: " & docFullName)
+		wordDoc.SaveAs(docFullName)
+		If displayWord Then wordDoc.Application.Activate()
+
+		'logW("结束 - 打开报告")
+
+		打开学校报告 = 0
+	End Function
+
+	Function 关闭学校报告(ByRef 学校 As String)
+		'logW("开始 - 关闭报告")
+
+		If 转pdf = 1 Then
+			Try
+				Dim docFullName As String
+				Dim docPath As String
+				docPath = Application.StartupPath & "\" & 学校
+				docFullName = docPath & ".pdf"
+
+				wordDoc.SaveAs(docFullName, Word.WdSaveFormat.wdFormatPDF)
+			Catch
+			End Try
+		End If
+		wordDoc.Close(Word.WdSaveOptions.wdSaveChanges)
+		wordDoc = Nothing
+
+		'logW("结束 - 关闭报告")
+
+		关闭学校报告 = 0
+	End Function
+
+	Private Sub 生成单个学校报告(ByRef 学校名称 As String, ByRef 学校信息 As 统计信息, ByRef 学区信息 As 统计信息)
+		Dim i As Int32
+		Dim j As Int32
+		Dim k As Int32
+
+		打开学校报告(学校名称)
+
+		For i = 1 To wordDoc.Paragraphs.Count
+			Dim content As String
+			content = wordDoc.Paragraphs(i).Range.Text()
+			If content.Contains("学校名称") Then
+				wordDoc.Paragraphs(i).Range.Text = 学校名称
+				wordDoc.Paragraphs(i).Format.Alignment = Word.WdParagraphAlignment.wdAlignParagraphRight
+				Exit For
+			End If
+		Next
+
+		For i = 1 To wordDoc.Tables.Count
+			Dim val As String
+			Dim table As Word.Table
+
+			table = wordDoc.Tables(i)
+			table.Select()
+			val = table.Cell(1, 1).Range.Text
+
+			If val.Contains("学校") Then
+				table.Cell(1, 2).Range.Text = 学校名称
+				table.Cell(2, 3).Range.Text = 学校信息.报名人数
+				table.Cell(2, 5).Range.Text = 学校信息.参测人数
+				table.Cell(2, 7).Range.Text = 学校信息.完测人数
+				table.Cell(3, 3).Range.Text = 学校信息.加分人数
+				table.Cell(3, 5).Range.Text = 转换百分比(学校信息.参测比例)
+				table.Cell(3, 7).Range.Text = 转换百分比(学校信息.完测比例)
+				table.Cell(4, 3).Range.Text = 学区信息.报名人数
+				table.Cell(4, 5).Range.Text = 学区信息.参测人数
+				table.Cell(4, 7).Range.Text = 学区信息.完测人数
+				table.Cell(5, 3).Range.Text = 学区信息.加分人数
+				table.Cell(5, 5).Range.Text = 转换百分比(学区信息.参测比例)
+				table.Cell(5, 7).Range.Text = 转换百分比(学区信息.完测比例)
+			ElseIf val.Contains("综合评定等级") Then
+				For j = 0 To 3
+					For k = 0 To 3
+						table.Cell(2 + j * 2, 3 + k).Range.Text = 转换百分比(学校信息.百分比(0, j, k))
+						table.Cell(3 + j * 2, 3 + k).Range.Text = 转换百分比(学区信息.百分比(0, j, k))
+					Next
+				Next
+			ElseIf val.Contains("评价等级") Then
+				Dim t As String
+				Dim g As Int32
+				t = table.Cell(2, 2).Range.Text
+				g = -1
+				If t.Contains("形校小优") Then
+					g = 0
+				ElseIf t.Contains("形校初优") Then
+					g = 1
+				ElseIf t.Contains("形校高优") Then
+					g = 2
+				End If
+				If g >= 0 Then
+					For j = 0 To 3
+						table.Cell(2, 2 + j).Range.Text = 转换百分比(学校信息.百分比(1, g, j))
+					Next
+					Dim idx As Int32
+					idx = 4
+					For j = 2 To 11
+						If 学校统计项(j).学段(g) <> 0 Then
+							For k = 0 To 3
+								table.Cell(idx, 2 + k).Range.Text = 转换百分比(学校信息.百分比(j, g, k))
+							Next
+							idx += 1
+						End If
+					Next
+				End If
+			ElseIf val.Contains("等级") Then
+				Dim idx As Int32
+				Dim row As Int32
+				Dim t As String
+				idx = 65535
+				t = table.Cell(2, 3).Range.Text
+				For j = 0 To 11
+					If t.Contains(学校统计项(j).关键字) Then
+						idx = j
+						Exit For
+					End If
+				Next
+				If idx <= 11 Then
+					row = 0
+					For j = 0 To 3
+						' 第j个学段
+						If 学校统计项(idx).学段(j) <> 0 Then
+							For k = 0 To 3
+								table.Cell(2 + row * 2, 3 + k).Range.Text = 转换百分比(学校信息.百分比(idx, j, k))
+								table.Cell(3 + row * 2, 3 + k).Range.Text = 转换百分比(学区信息.百分比(idx, j, k))
+							Next
+							row += 1
+						End If
+					Next
+				End If
+			End If
+		Next
+
+		关闭学校报告(学校名称)
+	End Sub
+
 	Private Sub 生成学校报告(ByVal 共几个文件 As UInt32, ByVal 第几个文件 As UInt32, ByRef excelWs As Excel.Worksheet)
 		' 处理Excel，生成报表
+
+		全区统计信息 = New 统计信息()
+		学校统计信息.Clear()
 
 		列名转列号表.Clear()
 		当前行号 = 1
@@ -552,10 +737,20 @@ out:
 
 				If wkExiting Then Exit Do
 			Loop
+
+			处理学校百分比(全区统计信息)
+			Dim i As UInt32
+			For i = 0 To 学校统计信息.Count - 1
+				处理学校百分比(学校统计信息.ElementAt(i).Value)
+				生成单个学校报告(学校统计信息.ElementAt(i).Key, 学校统计信息.ElementAt(i).Value, 全区统计信息)
+				Exit For
+			Next
 		Catch e As Exception
 			logE("处理数据:" & e.Message)
 			logE(e.StackTrace)
+			GoTo out
 		End Try
+
 out:
 	End Sub
 
@@ -1176,11 +1371,13 @@ out:
 	' 10000 倍
 	Function 转换百分比(ByVal 数值 As UInt32)
 		If 数值 = 0 Then
-			转换百分比 = "0"
+			转换百分比 = "0.00"
 		ElseIf 数值 < 10 Then
 			转换百分比 = "0.0" & 数值
 		ElseIf 数值 < 100 Then
 			转换百分比 = "0." & 数值
+		ElseIf 数值 = 10000 Then
+			转换百分比 = "100.00"
 		Else
 			转换百分比 = Int(数值 / 100) & "." & (数值 Mod 100)
 		End If
