@@ -474,8 +474,13 @@ out:
 	End Function
 
 	Private Sub 处理单项等级(ByRef 项 As 统计项, ByVal 学段 As UInt32, ByRef 信息 As 统计信息)
-		Dim 等级 As UInt32
+		' 缺项不参与计算
+		If 获取当前行数据("缺项数量") <> "0" And 项.序号 = 0 Then Exit Sub
+		' 该学段没有此测项
 		If 项.学段(学段) = 0 Then Exit Sub
+		If 获取当前行数据(项.名称) = String.Empty Or 获取当前行数据(项.名称) = "X" Then Exit Sub
+
+		Dim 等级 As UInt32
 		If 项.类型 = 0 Then
 			等级 = 计算等级(获取当前行数据(项.名称))
 		Else
