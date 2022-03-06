@@ -1085,7 +1085,7 @@ out:
 			excelWb.Close(Excel.XlSaveAction.xlDoNotSaveChanges)
 			excelWb = Nothing
 		End If
-		If useClipboard = 0 Then
+		If tmpName <> String.Empty Then
 			Try
 				If File.Exists(tmpName) Then
 					File.Delete(tmpName)
