@@ -148,7 +148,7 @@ Public Class Form1
 	' 日志
 	Dim logger As StreamWriter
 
-	Dim tmpName As String
+	Dim tmpName As String = String.Empty
 
 	Private Sub 装载应用()
 		logW("装载应用")
@@ -703,6 +703,32 @@ out:
 		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, "爆发力素质文本", "立定跳远", 8)
 	End Sub
 
+	Private Sub 生成学校报告图表(ByRef 学校信息 As 统计信息, ByRef 学区信息 As 统计信息)
+		Dim i As Int32
+
+		excelWsTmpl.Cells(2, 2).Value2 = 学校信息.参测人数
+		excelWsTmpl.Cells(3, 2).Value2 = 学校信息.报名人数 - 学校信息.参测人数
+		excelWsTmpl.Cells(12, 2).Value2 = 学校信息.完测人数
+		excelWsTmpl.Cells(13, 2).Value2 = 学校信息.参测人数 - 学校信息.完测人数
+		excelWsTmpl.Cells(14, 2).Value2 = 学校信息.报名人数 - 学校信息.参测人数
+		excelWsTmpl.Cells(32, 2).Value2 = 转换百分比(学校信息.百分比(0, 3, 3)) & "%"
+		excelWsTmpl.Cells(32, 3).Value2 = 转换百分比(学校信息.百分比(0, 3, 2)) & "%"
+		excelWsTmpl.Cells(32, 4).Value2 = 转换百分比(学校信息.百分比(0, 3, 1)) & "%"
+		excelWsTmpl.Cells(32, 5).Value2 = 转换百分比(学校信息.百分比(0, 3, 0)) & "%"
+		excelWsTmpl.Cells(33, 2).Value2 = 转换百分比(学区信息.百分比(0, 3, 3)) & "%"
+		excelWsTmpl.Cells(33, 3).Value2 = 转换百分比(学区信息.百分比(0, 3, 2)) & "%"
+		excelWsTmpl.Cells(33, 4).Value2 = 转换百分比(学区信息.百分比(0, 3, 1)) & "%"
+		excelWsTmpl.Cells(33, 5).Value2 = 转换百分比(学区信息.百分比(0, 3, 0)) & "%"
+
+		For i = 1 To wordDoc.InlineShapes.Count
+			wordDoc.InlineShapes(i).Select()
+			wordDoc.InlineShapes(i).Delete()
+			Dim ct As Excel.Chart = excelWsTmpl.ChartObjects(i).Chart
+			ct.Export(tmpName, "GIF")
+			wordDoc.Application.Selection.InlineShapes.AddPicture(tmpName, False, True)
+		Next
+	End Sub
+
 	Private Sub 生成单个学校报告(ByRef 学校名称 As String, ByRef 学校信息 As 统计信息, ByRef 学区信息 As 统计信息)
 		Dim i As Int32
 		Dim j As Int32
@@ -710,6 +736,7 @@ out:
 
 		打开学校报告(学校信息.区, 学校名称)
 
+		' 生成学校名称
 		For i = 1 To wordDoc.Paragraphs.Count
 			Dim content As String
 			content = wordDoc.Paragraphs(i).Range.Text()
@@ -721,6 +748,7 @@ out:
 			End If
 		Next
 
+		' 生成表格
 		For i = 1 To wordDoc.Tables.Count
 			Dim val As String
 			Dim table As Word.Table
@@ -805,6 +833,10 @@ out:
 			End If
 		Next
 
+		' 生成图表
+		生成学校报告图表(学校信息, 学区信息)
+
+		' 生成文本
 		生成单个学校测试结果分析(学校名称, 学校信息, 学区信息)
 
 		关闭学校报告(学校信息.区, 学校名称)
@@ -913,6 +945,13 @@ out:
 			GoTo out
 		End If
 
+		'If useClipboard = 0 Then
+		If tmpName = String.Empty Then
+			tmpName = System.IO.Path.GetTempFileName()
+			logR("获取临时文件: " & tmpName)
+		End If
+		'End If
+
 		' 处理原始数据
 		If 生成何种数据 = 0 Then
 			Dim excelWbDst As Excel.Workbook
@@ -944,20 +983,30 @@ out:
 
 		' 学校报告
 		If 生成何种数据 = 2 Then
+			' 第一次处理的时候打开Excel模板
+			If excelWbTmpl Is Nothing Then
+				Try
+					excelWbTmpl = excelApp.Workbooks.Add(Application.StartupPath & "\学校报告模板.xlsx")
+					excelWsTmpl = excelWbTmpl.Sheets(1)
+				Catch e As Exception
+					logE("打开Excel模板: " & e.Message)
+					logE(e.StackTrace)
+					'MsgBox("打开Excel模板: " & e.Message)
+					GoTo out
+				End Try
+			End If
+
 			Try
+
 				' Entry
 				生成学校报告(共几个文件, 第几个文件, 待处理文件, excelWs)
 			Catch e As Exception
 				logE("处理Excel数据: " & e.Message)
 				logE("处理Excel数据: " & e.StackTrace)
+				GoTo out
 			End Try
 
 			GoTo out
-		End If
-
-		If useClipboard = 0 Then
-			tmpName = System.IO.Path.GetTempFileName()
-			logR("获取临时文件: " & tmpName)
 		End If
 
 		' 处理Excel，生成报表
@@ -1045,6 +1094,7 @@ out:
 			Catch ex As Exception
 				logR("删除临时文件失败: " & tmpName)
 			End Try
+			tmpName = String.Empty
 		End If
 		logI("结束 - 处理数据 " & 待处理文件)
 	End Sub
