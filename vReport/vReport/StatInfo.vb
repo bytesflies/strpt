@@ -1,5 +1,7 @@
 ﻿
 Public Class 统计信息
+	Public 区 As String
+
 	Public 报名人数 As UInt32
 	Public 参测人数 As UInt32
 	Public 完测人数 As UInt32

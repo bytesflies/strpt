@@ -485,7 +485,19 @@ out:
 		信息.等级(项.序号, 3, 等级) += 1
 	End Sub
 
-	Private Sub 处理统计信息(ByRef 信息 As 统计信息)
+	Private Sub 处理统计信息(ByVal 统计学校 As Int32, ByRef 信息 As 统计信息)
+		If 统计学校 = 1 Then
+			Dim 区 As String
+
+			区 = 获取当前行数据("所属区")
+			If 区 <> String.Empty Then
+				If 学校转学区表.ContainsKey(获取当前行数据("学校")) Then
+					区 = 学校转学区表(获取当前行数据("学校"))
+				End If
+			End If
+			信息.区 = 区
+		End If
+
 		信息.报名人数 += 1
 		If 获取当前行数据("是否参测") = "是" Then
 			信息.参测人数 += 1
@@ -548,14 +560,15 @@ out:
 		Next
 	End Sub
 
-	Function 打开学校报告(ByRef 学校 As String)
+	Function 打开学校报告(ByRef 区 As String, ByRef 学校 As String)
 		Dim docFullName As String
 		Dim docPath As String
 
 		'logW("开始 - 打开报告")
 
-		docPath = Application.StartupPath & "\" & 学校
-		'If Not Directory.Exists(docPath) Then Directory.CreateDirectory(docPath)
+		docPath = Application.StartupPath & "\" & 区
+		If Not Directory.Exists(docPath) Then Directory.CreateDirectory(docPath)
+		docPath = docPath & "\" & 学校
 		docFullName = docPath & ".docx"
 
 		logW("打开报告模板")
@@ -569,14 +582,14 @@ out:
 		打开学校报告 = 0
 	End Function
 
-	Function 关闭学校报告(ByRef 学校 As String)
+	Function 关闭学校报告(ByRef 区 As String, ByRef 学校 As String)
 		'logW("开始 - 关闭报告")
 
 		If 转pdf = 1 Then
 			Try
 				Dim docFullName As String
 				Dim docPath As String
-				docPath = Application.StartupPath & "\" & 学校
+				docPath = Application.StartupPath & "\" & 区 & "\" & 学校
 				docFullName = docPath & ".pdf"
 
 				wordDoc.SaveAs(docFullName, Word.WdSaveFormat.wdFormatPDF)
@@ -690,7 +703,7 @@ out:
 		Dim j As Int32
 		Dim k As Int32
 
-		打开学校报告(学校名称)
+		打开学校报告(学校信息.区, 学校名称)
 
 		For i = 1 To wordDoc.Paragraphs.Count
 			Dim content As String
@@ -789,11 +802,13 @@ out:
 
 		生成单个学校测试结果分析(学校名称, 学校信息, 学区信息)
 
-		关闭学校报告(学校名称)
+		关闭学校报告(学校信息.区, 学校名称)
 	End Sub
 
-	Private Sub 生成学校报告(ByVal 共几个文件 As UInt32, ByVal 第几个文件 As UInt32, ByRef excelWs As Excel.Worksheet)
+	Private Sub 生成学校报告(ByVal 共几个文件 As UInt32, ByVal 第几个文件 As UInt32, ByRef 待处理文件 As String, ByRef excelWs As Excel.Worksheet)
 		' 处理Excel，生成报表
+		Dim 默认目录 As String
+		默认目录 = Path.GetFileNameWithoutExtension(待处理文件)
 
 		全区统计信息 = New 统计信息()
 		学校统计信息.Clear()
@@ -822,11 +837,14 @@ out:
 					Continue Do
 				End If
 
-				处理统计信息(全区统计信息)
+				处理统计信息(0, 全区统计信息)
 				If Not 学校统计信息.ContainsKey(学校名称) Then
 					学校统计信息.Add(学校名称, New 统计信息())
 				End If
-				处理统计信息(学校统计信息(学校名称))
+				处理统计信息(1, 学校统计信息(学校名称))
+				If 学校统计信息(学校名称).区 = String.Empty Then
+					学校统计信息(学校名称).区 = 默认目录
+				End If
 
 				sendProgress(String.Format("共{0}个文件。当前处理第{1}个文件的第{2}行", 共几个文件, 第几个文件, 当前行号))
 
@@ -838,10 +856,13 @@ out:
 			处理学校百分比(全区统计信息)
 			Dim i As UInt32
 			For i = 0 To 学校统计信息.Count - 1
-				sendProgress(String.Format("文件 {0}/{1}，学校 {2}/{3} *", 第几个文件, 共几个文件, i + 1, 学校统计信息.Count))
+				sendProgress(String.Format("文件 {0}/{1}，学校 {2}/{3}，进行中 ...", 第几个文件, 共几个文件, i + 1, 学校统计信息.Count))
+				logR("正在处理 " & 学校统计信息.ElementAt(i).Key)
 				处理学校百分比(学校统计信息.ElementAt(i).Value)
 				生成单个学校报告(学校统计信息.ElementAt(i).Key, 学校统计信息.ElementAt(i).Value, 全区统计信息)
-				sendProgress(String.Format("文件 {0}/{1}，学校 {2}/{3}", 第几个文件, 共几个文件, i + 1, 学校统计信息.Count))
+				sendProgress(String.Format("文件 {0}/{1}，学校 {2}/{3}，处理完", 第几个文件, 共几个文件, i + 1, 学校统计信息.Count))
+				purgeAsync()
+				If wkExiting Then Exit For
 				'Exit For
 			Next
 		Catch e As Exception
@@ -920,7 +941,7 @@ out:
 		If 生成何种数据 = 2 Then
 			Try
 				' Entry
-				生成学校报告(共几个文件, 第几个文件, excelWs)
+				生成学校报告(共几个文件, 第几个文件, 待处理文件, excelWs)
 			Catch e As Exception
 				logE("处理Excel数据: " & e.Message)
 				logE("处理Excel数据: " & e.StackTrace)
