@@ -637,8 +637,30 @@ out:
 		End If
 	End Function
 
-	Private Sub 生成单个学校测试结果分析文本(ByRef 学校名称 As String, ByRef 学校信息 As 统计信息, ByRef 学区信息 As 统计信息, ByRef 关键字 As String, ByRef 名称 As String, ByVal 项目 As UInt32)
+	Private 测试结果分析综述字体 As Word.Font = Nothing
+	Private 测试结果分析文本字体 As Word.Font = Nothing
+	Private 内容中的百分比字体 As Word.Font = Nothing
+
+	Private Sub 应用字体(ByRef 字体 As Word.Font)
+		wordDoc.Application.Selection.Font.Name = 字体.Name
+		wordDoc.Application.Selection.Font.Bold = 字体.Bold
+		wordDoc.Application.Selection.Font.Italic = 字体.Italic
+		wordDoc.Application.Selection.Font.Size = 字体.Size
+		wordDoc.Application.Selection.Font.Color = 字体.Color
+	End Sub
+
+	Private Sub 生成单个学校测试结果分析文本(ByRef 学校名称 As String, ByRef 学校信息 As 统计信息, ByRef 学区信息 As 统计信息, ByVal 综述 As Int32, ByRef 关键字 As String, ByRef 名称 As String, ByVal 项目 As UInt32)
 		Dim x() As UInt32 = {0, 0, 0, 0, 0, 0, 0, 0}
+		Dim 字体 As Word.Font
+		Dim 样式 As String
+
+		If 综述 = 1 Then
+			字体 = 测试结果分析综述字体
+			样式 = "测试结果分析综述"
+		Else
+			字体 = 测试结果分析文本字体
+			样式 = "测试结果分析文本"
+		End If
 
 		搜索(关键字)
 		x(0) = 学校信息.百分比(项目, 3, 0)
@@ -646,10 +668,24 @@ out:
 		x(2) = 学校信息.百分比(项目, 3, 3)
 		x(3) = 学区信息.百分比(项目, 3, 3)
 		wordDoc.Application.Selection.Paragraphs.First.Range.Text = ""
-		wordDoc.Application.Selection.Style = "测试结果分析文本"
-		wordDoc.Application.Selection.TypeText(String.Format("{0}测试情况反馈，本校处于优秀等级的学生占比（{1}），{2}总体测试数据平均水平（{3}）。本校处于不及格等级的学生占比（{4}），{5}总体测试数据平均水平（{6}）。", _
-		  名称, 转换百分比(x(0)), 比较(x(0), x(1)), 转换百分比(x(1)), 转换百分比(x(2)), 比较(x(2), x(3)), 转换百分比(x(3))))
-
+		wordDoc.Application.Selection.Style = 样式
+		wordDoc.Application.Selection.TypeText(String.Format("{0}测试情况反馈，本校处于优秀等级的学生占比（", 名称))
+		应用字体(内容中的百分比字体)
+		wordDoc.Application.Selection.TypeText(转换完整百分比(x(0)))
+		应用字体(字体)
+		wordDoc.Application.Selection.TypeText(String.Format("），{0}总体测试数据平均水平（", 比较(x(0), x(1))))
+		应用字体(内容中的百分比字体)
+		wordDoc.Application.Selection.TypeText(转换完整百分比(x(1)))
+		应用字体(字体)
+		wordDoc.Application.Selection.TypeText(String.Format("）。本校处于不及格等级的学生占比（"))
+		应用字体(内容中的百分比字体)
+		wordDoc.Application.Selection.TypeText(转换完整百分比(x(2)))
+		应用字体(字体)
+		wordDoc.Application.Selection.TypeText(String.Format("），{0}总体测试数据平均水平（", 比较(x(2), x(3))))
+		应用字体(内容中的百分比字体)
+		wordDoc.Application.Selection.TypeText(转换完整百分比(x(3)))
+		应用字体(字体)
+		wordDoc.Application.Selection.TypeText(String.Format("）。"))
 	End Sub
 
 	Private Sub 生成单个学校测试结果分析(ByRef 学校名称 As String, ByRef 学校信息 As 统计信息, ByRef 学区信息 As 统计信息)
@@ -662,10 +698,46 @@ out:
 		x(1) = 学区信息.百分比(0, 3, 0) + 学区信息.百分比(0, 3, 1)
 		x(2) = 学校信息.百分比(0, 3, 3)
 		x(3) = 学区信息.百分比(0, 3, 3)
+
+		Dim 获取 As Int32 = 0
+		If 测试结果分析综述字体 Is Nothing Then
+			For Each 样式 As Word.Style In wordDoc.Styles
+				If 样式.NameLocal = "测试结果分析综述" Then
+					测试结果分析综述字体 = 样式.Font.Duplicate
+					获取 += 1
+				End If
+				If 样式.NameLocal = "测试结果分析文本" Then
+					测试结果分析文本字体 = 样式.Font.Duplicate
+					获取 += 1
+				End If
+				If 样式.NameLocal = "内容中的百分比" Then
+					内容中的百分比字体 = 样式.Font.Duplicate
+					获取 += 1
+				End If
+				If 获取 >= 3 Then Exit For
+			Next
+		End If
+
 		wordDoc.Application.Selection.Paragraphs.First.Range.Text = ""
 		wordDoc.Application.Selection.Style = "测试结果分析综述"
-		wordDoc.Application.Selection.TypeText(String.Format("本次体质健康标准测试情况反馈，{0}的学生综合成绩优良率（{1}），{2}总体测试数据平均水平（{3}）。学生综合成绩不及格率（{4}），{5}总体测试数据平均水平（{6}）。本校整体情况处于{7}水平。", _
-		  学校名称, 转换百分比(x(0)), 比较(x(0), x(1)), 转换百分比(x(1)), 转换百分比(x(2)), 比较(x(2), x(3)), 转换百分比(x(3)), "中上"))
+		应用字体(测试结果分析综述字体)
+		wordDoc.Application.Selection.TypeText(String.Format("本次体质健康标准测试情况反馈，{0}的学生综合成绩优良率（", 学校名称))
+		应用字体(内容中的百分比字体)
+		wordDoc.Application.Selection.TypeText(转换完整百分比(x(0)))
+		应用字体(测试结果分析综述字体)
+		wordDoc.Application.Selection.TypeText(String.Format("），{0}总体测试数据平均水平（", 比较(x(0), x(1))))
+		应用字体(内容中的百分比字体)
+		wordDoc.Application.Selection.TypeText(转换完整百分比(x(1)))
+		应用字体(测试结果分析综述字体)
+		wordDoc.Application.Selection.TypeText(String.Format("）。学生综合成绩不及格率（"))
+		应用字体(内容中的百分比字体)
+		wordDoc.Application.Selection.TypeText(转换完整百分比(x(2)))
+		应用字体(测试结果分析综述字体)
+		wordDoc.Application.Selection.TypeText(String.Format("），{0}总体测试数据平均水平（", 比较(x(2), x(3))))
+		应用字体(内容中的百分比字体)
+		wordDoc.Application.Selection.TypeText(转换完整百分比(x(3)))
+		应用字体(测试结果分析综述字体)
+		wordDoc.Application.Selection.TypeText(String.Format("）。"))
 
 		搜索("身体形态综述")
 		x(0) = 学校信息.百分比(1, 3, 0)
@@ -678,29 +750,51 @@ out:
 		x(7) = 学区信息.百分比(1, 3, 3)
 		wordDoc.Application.Selection.Paragraphs.First.Range.Text = ""
 		wordDoc.Application.Selection.Style = "测试结果分析综述"
-		wordDoc.Application.Selection.TypeText(String.Format("体重指数测试情况反馈，本校处于正常体重水平的学生占比（{0}），{1}总体测试数据平均水平（{2}）。本校处于低体重水平的学生占比（{3}），{4}总体测试数据平均水平（{5}）。本校处于超重水平的学生占比（{6}），{7}总体测试数据平均水平（{8}）。本校处于肥胖水平的学生占比（{9}），{10}总体测试数据平均水平（{11}）。", _
-		  转换百分比(x(0)), 比较(x(0), x(1)), 转换百分比(x(1)), 转换百分比(x(2)), 比较(x(2), x(3)), 转换百分比(x(3)), _
-		  转换百分比(x(4)), 比较(x(4), x(5)), 转换百分比(x(5)), 转换百分比(x(6)), 比较(x(6), x(7)), 转换百分比(x(7))))
+		应用字体(测试结果分析综述字体)
+		wordDoc.Application.Selection.TypeText(String.Format("体重指数测试情况反馈，本校处于正常体重水平的学生占比（"))
+		应用字体(内容中的百分比字体)
+		wordDoc.Application.Selection.TypeText(转换完整百分比(x(0)))
+		应用字体(测试结果分析综述字体)
+		wordDoc.Application.Selection.TypeText(String.Format("），{0}总体测试数据平均水平（", 比较(x(0), x(1))))
+		应用字体(内容中的百分比字体)
+		wordDoc.Application.Selection.TypeText(转换完整百分比(x(1)))
+		应用字体(测试结果分析综述字体)
+		wordDoc.Application.Selection.TypeText(String.Format("）。本校处于低体重水平的学生占比（"))
+		应用字体(内容中的百分比字体)
+		wordDoc.Application.Selection.TypeText(转换完整百分比(x(2)))
+		应用字体(测试结果分析综述字体)
+		wordDoc.Application.Selection.TypeText(String.Format("），{0}总体测试数据平均水平（", 比较(x(2), x(3))))
+		应用字体(内容中的百分比字体)
+		wordDoc.Application.Selection.TypeText(转换完整百分比(x(3)))
+		应用字体(测试结果分析综述字体)
+		wordDoc.Application.Selection.TypeText(String.Format("）。本校处于超重水平的学生占比（"))
+		应用字体(内容中的百分比字体)
+		wordDoc.Application.Selection.TypeText(转换完整百分比(x(4)))
+		应用字体(测试结果分析综述字体)
+		wordDoc.Application.Selection.TypeText(String.Format("），{0}总体测试数据平均水平（", 比较(x(4), x(5))))
+		应用字体(内容中的百分比字体)
+		wordDoc.Application.Selection.TypeText(转换完整百分比(x(5)))
+		应用字体(测试结果分析综述字体)
+		wordDoc.Application.Selection.TypeText(String.Format("）。本校处于肥胖水平的学生占比（"))
+		应用字体(内容中的百分比字体)
+		wordDoc.Application.Selection.TypeText(转换完整百分比(x(6)))
+		应用字体(测试结果分析综述字体)
+		wordDoc.Application.Selection.TypeText(String.Format("），{0}总体测试数据平均水平（", 比较(x(6), x(7))))
+		应用字体(内容中的百分比字体)
+		wordDoc.Application.Selection.TypeText(转换完整百分比(x(7)))
+		应用字体(测试结果分析综述字体)
+		wordDoc.Application.Selection.TypeText(String.Format("）。"))
 
-		搜索("身体机能综述")
-		x(0) = 学校信息.百分比(2, 3, 0)
-		x(1) = 学区信息.百分比(2, 3, 0)
-		x(2) = 学校信息.百分比(2, 3, 3)
-		x(3) = 学区信息.百分比(2, 3, 3)
-		wordDoc.Application.Selection.Paragraphs.First.Range.Text = ""
-		wordDoc.Application.Selection.Style = "测试结果分析综述"
-		wordDoc.Application.Selection.TypeText(String.Format("肺活量测试情况反馈，本校处于优秀等级的学生占比（{0}），{1}总体测试数据平均水平（{2}）。本校处于不及格等级的学生占比（{3}），{4}总体测试数据平均水平（{5}）。", _
-		  转换百分比(x(0)), 比较(x(0), x(1)), 转换百分比(x(1)), 转换百分比(x(2)), 比较(x(2), x(3)), 转换百分比(x(3))))
-
-		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, "速度素质文本", "50米跑", 3)
-		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, "柔韧素质文本", "坐位体前屈", 4)
-		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, "力量素质文本1", "1分钟仰卧起坐", 6)
-		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, "力量素质文本2", "引体向上", 11)
-		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, "协调素质文本", "1分钟跳绳", 5)
-		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, "耐力素质文本小", "50米x8往返跑", 7)
-		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, "耐力素质文本女", "800米跑", 9)
-		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, "耐力素质文本男", "1000米跑", 10)
-		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, "爆发力素质文本", "立定跳远", 8)
+		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, 1, "身体机能综述", "肺活量", 2)
+		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, 0, "速度素质文本", "50米跑", 3)
+		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, 0, "柔韧素质文本", "坐位体前屈", 4)
+		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, 0, "力量素质文本1", "1分钟仰卧起坐", 6)
+		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, 0, "力量素质文本2", "引体向上", 11)
+		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, 0, "协调素质文本", "1分钟跳绳", 5)
+		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, 0, "耐力素质文本小", "50米x8往返跑", 7)
+		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, 0, "耐力素质文本女", "800米跑", 9)
+		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, 0, "耐力素质文本男", "1000米跑", 10)
+		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, 0, "爆发力素质文本", "立定跳远", 8)
 	End Sub
 
 	Private Sub 生成学校报告图表(ByRef 学校信息 As 统计信息, ByRef 学区信息 As 统计信息)
@@ -711,14 +805,14 @@ out:
 		excelWsTmpl.Cells(12, 2).Value2 = 学校信息.完测人数
 		excelWsTmpl.Cells(13, 2).Value2 = 学校信息.参测人数 - 学校信息.完测人数
 		excelWsTmpl.Cells(14, 2).Value2 = 学校信息.报名人数 - 学校信息.参测人数
-		excelWsTmpl.Cells(32, 2).Value2 = 转换百分比(学校信息.百分比(0, 3, 3)) & "%"
-		excelWsTmpl.Cells(32, 3).Value2 = 转换百分比(学校信息.百分比(0, 3, 2)) & "%"
-		excelWsTmpl.Cells(32, 4).Value2 = 转换百分比(学校信息.百分比(0, 3, 1)) & "%"
-		excelWsTmpl.Cells(32, 5).Value2 = 转换百分比(学校信息.百分比(0, 3, 0)) & "%"
-		excelWsTmpl.Cells(33, 2).Value2 = 转换百分比(学区信息.百分比(0, 3, 3)) & "%"
-		excelWsTmpl.Cells(33, 3).Value2 = 转换百分比(学区信息.百分比(0, 3, 2)) & "%"
-		excelWsTmpl.Cells(33, 4).Value2 = 转换百分比(学区信息.百分比(0, 3, 1)) & "%"
-		excelWsTmpl.Cells(33, 5).Value2 = 转换百分比(学区信息.百分比(0, 3, 0)) & "%"
+		excelWsTmpl.Cells(32, 2).Value2 = 转换完整百分比(学校信息.百分比(0, 3, 3))
+		excelWsTmpl.Cells(32, 3).Value2 = 转换完整百分比(学校信息.百分比(0, 3, 2))
+		excelWsTmpl.Cells(32, 4).Value2 = 转换完整百分比(学校信息.百分比(0, 3, 1))
+		excelWsTmpl.Cells(32, 5).Value2 = 转换完整百分比(学校信息.百分比(0, 3, 0))
+		excelWsTmpl.Cells(33, 2).Value2 = 转换完整百分比(学区信息.百分比(0, 3, 3))
+		excelWsTmpl.Cells(33, 3).Value2 = 转换完整百分比(学区信息.百分比(0, 3, 2))
+		excelWsTmpl.Cells(33, 4).Value2 = 转换完整百分比(学区信息.百分比(0, 3, 1))
+		excelWsTmpl.Cells(33, 5).Value2 = 转换完整百分比(学区信息.百分比(0, 3, 0))
 
 		For i = 1 To wordDoc.InlineShapes.Count
 			wordDoc.InlineShapes(i).Select()
@@ -734,7 +828,9 @@ out:
 		Dim j As Int32
 		Dim k As Int32
 
+		logR("开始 - 打开学校报告")
 		打开学校报告(学校信息.区, 学校名称)
+		logR("结束 - 打开学校报告")
 
 		' 生成学校名称
 		For i = 1 To wordDoc.Paragraphs.Count
@@ -747,6 +843,7 @@ out:
 				Exit For
 			End If
 		Next
+		logR("结束 - 生成学校名称")
 
 		' 生成表格
 		For i = 1 To wordDoc.Tables.Count
@@ -757,25 +854,26 @@ out:
 			table.Select()
 			val = table.Cell(1, 1).Range.Text
 
+			logR("处理表格" & i & "一共" & wordDoc.Tables.Count & "名称" & val)
 			If val.Contains("学校") Then
 				table.Cell(1, 2).Range.Text = 学校名称
 				table.Cell(2, 3).Range.Text = 学校信息.报名人数
 				table.Cell(2, 5).Range.Text = 学校信息.参测人数
 				table.Cell(2, 7).Range.Text = 学校信息.完测人数
 				table.Cell(3, 3).Range.Text = 学校信息.加分人数
-				table.Cell(3, 5).Range.Text = 转换百分比(学校信息.参测比例)
-				table.Cell(3, 7).Range.Text = 转换百分比(学校信息.完测比例)
+				table.Cell(3, 5).Range.Text = 转换完整百分比(学校信息.参测比例)
+				table.Cell(3, 7).Range.Text = 转换完整百分比(学校信息.完测比例)
 				table.Cell(4, 3).Range.Text = 学区信息.报名人数
 				table.Cell(4, 5).Range.Text = 学区信息.参测人数
 				table.Cell(4, 7).Range.Text = 学区信息.完测人数
 				table.Cell(5, 3).Range.Text = 学区信息.加分人数
-				table.Cell(5, 5).Range.Text = 转换百分比(学区信息.参测比例)
-				table.Cell(5, 7).Range.Text = 转换百分比(学区信息.完测比例)
+				table.Cell(5, 5).Range.Text = 转换完整百分比(学区信息.参测比例)
+				table.Cell(5, 7).Range.Text = 转换完整百分比(学区信息.完测比例)
 			ElseIf val.Contains("综合评定等级") Then
 				For j = 0 To 3
 					For k = 0 To 3
-						table.Cell(2 + j * 2, 3 + k).Range.Text = 转换百分比(学校信息.百分比(0, j, k))
-						table.Cell(3 + j * 2, 3 + k).Range.Text = 转换百分比(学区信息.百分比(0, j, k))
+						table.Cell(2 + j * 2, 3 + k).Range.Text = 转换完整百分比(学校信息.百分比(0, j, k))
+						table.Cell(3 + j * 2, 3 + k).Range.Text = 转换完整百分比(学区信息.百分比(0, j, k))
 					Next
 				Next
 			ElseIf val.Contains("评价等级") Then
@@ -792,14 +890,14 @@ out:
 				End If
 				If g >= 0 Then
 					For j = 0 To 3
-						table.Cell(2, 2 + j).Range.Text = 转换百分比(学校信息.百分比(1, g, j))
+						table.Cell(2, 2 + j).Range.Text = 转换完整百分比(学校信息.百分比(1, g, j))
 					Next
 					Dim idx As Int32
 					idx = 4
 					For j = 2 To 11
 						If 学校统计项(j).学段(g) <> 0 Then
 							For k = 0 To 3
-								table.Cell(idx, 2 + k).Range.Text = 转换百分比(学校信息.百分比(j, g, k))
+								table.Cell(idx, 2 + k).Range.Text = 转换完整百分比(学校信息.百分比(j, g, k))
 							Next
 							idx += 1
 						End If
@@ -823,8 +921,8 @@ out:
 						' 第j个学段
 						If 学校统计项(idx).学段(j) <> 0 Then
 							For k = 0 To 3
-								table.Cell(2 + row * 2, 3 + k).Range.Text = 转换百分比(学校信息.百分比(idx, j, k))
-								table.Cell(3 + row * 2, 3 + k).Range.Text = 转换百分比(学区信息.百分比(idx, j, k))
+								table.Cell(2 + row * 2, 3 + k).Range.Text = 转换完整百分比(学校信息.百分比(idx, j, k))
+								table.Cell(3 + row * 2, 3 + k).Range.Text = 转换完整百分比(学区信息.百分比(idx, j, k))
 							Next
 							row += 1
 						End If
@@ -833,13 +931,18 @@ out:
 			End If
 		Next
 
+		logR("结束 - 处理表格")
 		' 生成图表
 		生成学校报告图表(学校信息, 学区信息)
 
+		logR("结束 - 生成学校图表")
 		' 生成文本
 		生成单个学校测试结果分析(学校名称, 学校信息, 学区信息)
 
+		logR("结束 - 生成学校结果分析")
 		关闭学校报告(学校信息.区, 学校名称)
+
+		logR("结束 - 关闭学校报告")
 	End Sub
 
 	Private Sub 生成学校报告(ByVal 共几个文件 As UInt32, ByVal 第几个文件 As UInt32, ByRef 待处理文件 As String, ByRef excelWs As Excel.Worksheet)
@@ -896,6 +999,7 @@ out:
 				sendProgress(String.Format("文件 {0}/{1}，学校 {2}/{3}，进行中 ...", 第几个文件, 共几个文件, i + 1, 学校统计信息.Count))
 				logR("正在处理 " & 学校统计信息.ElementAt(i).Key)
 				处理学校百分比(学校统计信息.ElementAt(i).Value)
+				logR("处理学校百分比结束")
 				生成单个学校报告(学校统计信息.ElementAt(i).Key, 学校统计信息.ElementAt(i).Value, 全区统计信息)
 				sendProgress(String.Format("文件 {0}/{1}，学校 {2}/{3}，处理完", 第几个文件, 共几个文件, i + 1, 学校统计信息.Count))
 				purgeAsync()
@@ -909,6 +1013,9 @@ out:
 		End Try
 
 out:
+		测试结果分析综述字体 = Nothing
+		测试结果分析文本字体 = Nothing
+		内容中的百分比字体 = Nothing
 	End Sub
 
 	Private Sub 处理数据(ByVal 共几个文件 As UInt32, ByVal 第几个文件 As UInt32, ByRef 待处理文件 As String)
@@ -1557,6 +1664,10 @@ out:
 			转换百分比 = Int(数值 / 100) & "." & (数值 Mod 100)
 		End If
 		logI("转换百分比: " & 数值 & " > " & 转换百分比)
+	End Function
+
+	Function 转换完整百分比(ByVal 数值 As UInt32)
+		转换完整百分比 = 转换百分比(数值) & "%"
 	End Function
 
 	Function 格式化百分比(ByVal 百分比 As String)
