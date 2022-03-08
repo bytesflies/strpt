@@ -1018,13 +1018,53 @@ out:
 		内容中的百分比字体 = Nothing
 	End Sub
 
+	Private Sub 处理区百分比(ByVal 共几个文件 As UInt32, ByVal 第几个文件 As UInt32, ByRef 待处理文件 As String, ByRef excelWb As Excel.Workbook)
+		Dim i As Int32
+		Dim x(3) As UInt32
+		Dim y(3) As UInt32
+
+		For i = 1 To excelWb.Sheets.Count
+			excelWs = excelWb.Sheets(i)
+
+			当前行号 = 1
+			已经读取的行数 = 0
+			预取数据到缓存(excelWs)
+
+			Do While True
+				移动到下一行()
+				预取数据到缓存(excelWs)
+
+				If 获取当前行数据(3) = String.Empty Then Exit Do
+				If Not IsNumeric(获取当前行数据(3)) Then Continue Do
+
+				sendProgress(String.Format("文件 {0}/{1}，工作表 {2}/{3}，行{4}开始 ...", 第几个文件, 共几个文件, i, excelWb.Sheets.Count, 当前行号))
+
+				For j = 0 To 3
+					x(j) = 获取当前行数据(4 + j * 2)
+				Next
+				计算百分比(x, y)
+				For j = 0 To 3
+					excelWs.Cells(当前行号, 5 + j * 2).Value2 = 转换完整百分比(y(j))
+				Next
+
+				sendProgress(String.Format("文件 {0}/{1}，工作表 {2}/{3}，行{4}结束 ...", 第几个文件, 共几个文件, i, excelWb.Sheets.Count, 当前行号))
+			Loop
+		Next
+		excelWb.Close(Excel.XlSaveAction.xlSaveChanges)
+		excelWb = Nothing
+	End Sub
+
 	Private Sub 处理数据(ByVal 共几个文件 As UInt32, ByVal 第几个文件 As UInt32, ByRef 待处理文件 As String)
 		Dim 生成何种数据 As Int32 = -1
 
 		logI("开始 - 处理数据 " & 待处理文件)
 
 		Try
-			excelWb = excelApp.Workbooks.Open(待处理文件, Nothing, True)
+			If wkType = 3 Then
+				excelWb = excelApp.Workbooks.Open(待处理文件, Nothing, False)
+			Else
+				excelWb = excelApp.Workbooks.Open(待处理文件, Nothing, True)
+			End If
 			excelWs = Nothing
 			For i = 1 To excelWb.Sheets.Count
 				excelWs = excelWb.Sheets(i)
@@ -1038,6 +1078,10 @@ out:
 				End If
 				If wkType = 2 And excelWs.Range("C1").Text = "ID" Then
 					生成何种数据 = 2
+					Exit For
+				End If
+				If wkType = 3 And excelWs.Range("C1").Text = "样本个数" Then
+					生成何种数据 = 3
 					Exit For
 				End If
 			Next
@@ -1110,9 +1154,19 @@ out:
 			Catch e As Exception
 				logE("处理Excel数据: " & e.Message)
 				logE("处理Excel数据: " & e.StackTrace)
-				GoTo out
 			End Try
 
+			GoTo out
+		End If
+
+		' 学校报告
+		If 生成何种数据 = 3 Then
+			Try
+				处理区百分比(共几个文件, 第几个文件, 待处理文件, excelWb)
+			Catch e As Exception
+				logE("处理Excel数据: " & e.Message)
+				logE("处理Excel数据: " & e.StackTrace)
+			End Try
 			GoTo out
 		End If
 
@@ -1661,7 +1715,13 @@ out:
 		ElseIf 数值 = 10000 Then
 			转换百分比 = "100.00"
 		Else
-			转换百分比 = Int(数值 / 100) & "." & (数值 Mod 100)
+			Dim 余数 As UInt32
+			余数 = 数值 Mod 100
+			If 余数 < 10 Then
+				转换百分比 = Int(数值 / 100) & ".0" & 余数
+			Else
+				转换百分比 = Int(数值 / 100) & "." & 余数
+			End If
 		End If
 		logI("转换百分比: " & 数值 & " > " & 转换百分比)
 	End Function
@@ -3596,6 +3656,10 @@ found:
 
 	Private Sub Button5_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button5.Click
 		点击事件(2)
+	End Sub
+
+	Private Sub Button6_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button6.Click
+		点击事件(3)
 	End Sub
 End Class
 

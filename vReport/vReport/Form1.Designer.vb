@@ -29,6 +29,7 @@ Partial Class Form1
 		Me.Label1 = New System.Windows.Forms.Label
 		Me.Button4 = New System.Windows.Forms.Button
 		Me.Button5 = New System.Windows.Forms.Button
+		Me.Button6 = New System.Windows.Forms.Button
 		Me.SuspendLayout()
 		'
 		'Button1
@@ -55,7 +56,7 @@ Partial Class Form1
 		'
 		'Button2
 		'
-		Me.Button2.Location = New System.Drawing.Point(249, 12)
+		Me.Button2.Location = New System.Drawing.Point(331, 12)
 		Me.Button2.Name = "Button2"
 		Me.Button2.Size = New System.Drawing.Size(71, 28)
 		Me.Button2.TabIndex = 3
@@ -74,7 +75,7 @@ Partial Class Form1
 		'Label1
 		'
 		Me.Label1.AutoSize = True
-		Me.Label1.Location = New System.Drawing.Point(422, 20)
+		Me.Label1.Location = New System.Drawing.Point(504, 20)
 		Me.Label1.Name = "Label1"
 		Me.Label1.Size = New System.Drawing.Size(29, 12)
 		Me.Label1.TabIndex = 3
@@ -82,7 +83,7 @@ Partial Class Form1
 		'
 		'Button4
 		'
-		Me.Button4.Location = New System.Drawing.Point(325, 12)
+		Me.Button4.Location = New System.Drawing.Point(408, 12)
 		Me.Button4.Name = "Button4"
 		Me.Button4.Size = New System.Drawing.Size(71, 28)
 		Me.Button4.TabIndex = 4
@@ -98,11 +99,21 @@ Partial Class Form1
 		Me.Button5.Text = "学校报告"
 		Me.Button5.UseVisualStyleBackColor = True
 		'
+		'Button6
+		'
+		Me.Button6.Location = New System.Drawing.Point(250, 15)
+		Me.Button6.Name = "Button6"
+		Me.Button6.Size = New System.Drawing.Size(75, 23)
+		Me.Button6.TabIndex = 5
+		Me.Button6.Text = "区百分比"
+		Me.Button6.UseVisualStyleBackColor = True
+		'
 		'Form1
 		'
 		Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 12.0!)
 		Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
 		Me.ClientSize = New System.Drawing.Size(909, 531)
+		Me.Controls.Add(Me.Button6)
 		Me.Controls.Add(Me.Button5)
 		Me.Controls.Add(Me.Button4)
 		Me.Controls.Add(Me.Label1)
@@ -123,5 +134,6 @@ Partial Class Form1
 	Friend WithEvents Label1 As System.Windows.Forms.Label
 	Friend WithEvents Button4 As System.Windows.Forms.Button
 	Friend WithEvents Button5 As System.Windows.Forms.Button
+	Friend WithEvents Button6 As System.Windows.Forms.Button
 
 End Class
