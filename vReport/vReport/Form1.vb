@@ -504,14 +504,15 @@ out:
 		End If
 
 		信息.报名人数 += 1
-		If 获取当前行数据("是否参测") = "是" Then
+		If 获取当前行数据("是否参测") = "是" Or 获取当前行数据("是否参测") = "缺项" Then
 			信息.参测人数 += 1
 			If 获取当前行数据("缺项数量") = "0" Then
 				信息.完测人数 += 1
+				' 只统计完测的加分
+				If 获取当前行数据("附加分") <> String.Empty And 获取当前行数据("附加分") <> "0" And 获取当前行数据("附加分") <> "X" Then
+					信息.加分人数 += 1
+				End If
 			End If
-		End If
-		If 获取当前行数据("附加分") <> String.Empty And 获取当前行数据("附加分") <> "0" Then
-			信息.加分人数 += 1
 		End If
 
 		Dim 学段 As UInt32
@@ -791,7 +792,7 @@ out:
 		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, 0, "力量素质文本1", "1分钟仰卧起坐", 6)
 		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, 0, "力量素质文本2", "引体向上", 11)
 		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, 0, "协调素质文本", "1分钟跳绳", 5)
-		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, 0, "耐力素质文本小", "50米x8往返跑", 7)
+		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, 0, "耐力素质文本小", "50米*8往返跑", 7)
 		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, 0, "耐力素质文本女", "800米跑", 9)
 		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, 0, "耐力素质文本男", "1000米跑", 10)
 		生成单个学校测试结果分析文本(学校名称, 学校信息, 学区信息, 0, "爆发力素质文本", "立定跳远", 8)
@@ -817,9 +818,16 @@ out:
 		For i = 1 To wordDoc.InlineShapes.Count
 			wordDoc.InlineShapes(i).Select()
 			wordDoc.InlineShapes(i).Delete()
-			Dim ct As Excel.Chart = excelWsTmpl.ChartObjects(i).Chart
-			ct.Export(tmpName, "GIF")
-			wordDoc.Application.Selection.InlineShapes.AddPicture(tmpName, False, True)
+			If False Then
+				Dim ct As Excel.Chart = excelWsTmpl.ChartObjects(i).Chart
+				ct.Export(tmpName, "GIF")
+				wordDoc.Application.Selection.InlineShapes.AddPicture(tmpName, False, True)
+			Else
+				excelWsTmpl.Shapes().Item(i).Select() '.SelectAll()
+				excelWsTmpl.Application.Selection.copy()
+				'wordDoc.Application.Selection.PasteAndFormat(Word.WdRecoveryType.wdChartPicture)
+				wordDoc.Application.Selection.PasteAndFormat(Word.WdRecoveryType.wdFormatOriginalFormatting)
+			End If
 		Next
 	End Sub
 
@@ -1377,7 +1385,7 @@ out:
 				End If
 
 				If m = 1 And a.Length = 2 Then
-					If Not 学校转学区表.ContainsKey(a(0)) Then 学校转学区表(a(0)) = a(1)
+					If Not 学校转学区表.ContainsKey(a(1)) Then 学校转学区表(a(1)) = a(0)
 				End If
 				If m = 2 And a.Length = 2 Then
 					If Not 列重命名0.ContainsKey(a(0)) Then 列重命名0(a(0)) = a(1)
