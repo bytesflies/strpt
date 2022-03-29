@@ -40,6 +40,7 @@ Partial Class Form1
 		Me.停止处理ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem
 		Me.停止处理ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem
 		Me.清空日志ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem
+		Me.清空状态ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem
 		Me.StatusStrip1 = New System.Windows.Forms.StatusStrip
 		Me.ToolStripStatusLabel1 = New System.Windows.Forms.ToolStripStatusLabel
 		Me.ContextMenuStrip1 = New System.Windows.Forms.ContextMenuStrip(Me.components)
@@ -153,22 +154,28 @@ Partial Class Form1
 		'
 		'停止处理ToolStripMenuItem
 		'
-		Me.停止处理ToolStripMenuItem.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.停止处理ToolStripMenuItem1, Me.清空日志ToolStripMenuItem1})
+		Me.停止处理ToolStripMenuItem.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.停止处理ToolStripMenuItem1, Me.清空日志ToolStripMenuItem1, Me.清空状态ToolStripMenuItem1})
 		Me.停止处理ToolStripMenuItem.Name = "停止处理ToolStripMenuItem"
-		Me.停止处理ToolStripMenuItem.Size = New System.Drawing.Size(44, 21)
-		Me.停止处理ToolStripMenuItem.Text = "其它"
+		Me.停止处理ToolStripMenuItem.Size = New System.Drawing.Size(68, 21)
+		Me.停止处理ToolStripMenuItem.Text = "辅助操作"
 		'
 		'停止处理ToolStripMenuItem1
 		'
 		Me.停止处理ToolStripMenuItem1.Name = "停止处理ToolStripMenuItem1"
-		Me.停止处理ToolStripMenuItem1.Size = New System.Drawing.Size(124, 22)
+		Me.停止处理ToolStripMenuItem1.Size = New System.Drawing.Size(152, 22)
 		Me.停止处理ToolStripMenuItem1.Text = "停止处理"
 		'
 		'清空日志ToolStripMenuItem1
 		'
 		Me.清空日志ToolStripMenuItem1.Name = "清空日志ToolStripMenuItem1"
-		Me.清空日志ToolStripMenuItem1.Size = New System.Drawing.Size(124, 22)
+		Me.清空日志ToolStripMenuItem1.Size = New System.Drawing.Size(152, 22)
 		Me.清空日志ToolStripMenuItem1.Text = "清空日志"
+		'
+		'清空状态ToolStripMenuItem1
+		'
+		Me.清空状态ToolStripMenuItem1.Name = "清空状态ToolStripMenuItem1"
+		Me.清空状态ToolStripMenuItem1.Size = New System.Drawing.Size(152, 22)
+		Me.清空状态ToolStripMenuItem1.Text = "清空状态"
 		'
 		'StatusStrip1
 		'
@@ -246,5 +253,6 @@ Partial Class Form1
 	Friend WithEvents ContextMenuStrip1 As System.Windows.Forms.ContextMenuStrip
 	Friend WithEvents 清空日志ToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
 	Friend WithEvents 清空状态ToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
+	Friend WithEvents 清空状态ToolStripMenuItem1 As System.Windows.Forms.ToolStripMenuItem
 
 End Class

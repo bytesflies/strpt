@@ -3719,6 +3719,10 @@ found:
 	Private Sub 清空状态ToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles 清空状态ToolStripMenuItem.Click
 		ToolStripStatusLabel1.Text = "状态"
 	End Sub
+
+	Private Sub 清空状态ToolStripMenuItem1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles 清空状态ToolStripMenuItem1.Click
+		ToolStripStatusLabel1.Text = "状态"
+	End Sub
 End Class
 
 Public Class Student
