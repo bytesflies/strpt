@@ -186,7 +186,8 @@ Public Class Form1
 				RichTextBox1.Text = Strings.Left(RichTextBox1.Text, 4096)
 			End If
 		ElseIf msgEntity.type = MsgType.mtProgress Then
-			Label1.Text = msgEntity.data
+			'Label1.Text = msgEntity.data
+			ToolStripStatusLabel1.Text = msgEntity.data
 		Else
 		End If
 
@@ -1436,7 +1437,8 @@ out:
 
 		读配置文件()
 
-		Label1.Text = ""
+		'Label1.Text = ""
+		ToolStripStatusLabel1.Text = ""
 
 		Thread.VolatileWrite(wkExiting, 0)
 		Thread.VolatileWrite(wkDone, 0)
@@ -1449,15 +1451,15 @@ out:
 		logI("结束 - 处理点击事件")
 	End Sub
 
-	Private Sub Button1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button1.Click
+	Private Sub Button1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs)
 		点击事件(0)
 	End Sub
 
-	Private Sub Button2_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button2.Click
+	Private Sub Button2_Click(ByVal sender As System.Object, ByVal e As System.EventArgs)
 		cancelReport(0)
 	End Sub
 
-	Private Sub Button3_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button3.Click
+	Private Sub Button3_Click(ByVal sender As System.Object, ByVal e As System.EventArgs)
 		点击事件(1)
 	End Sub
 
@@ -3657,16 +3659,65 @@ found:
 		st.totalJfScore = (st.tsJfScore + st.ywqzJfScore + st.nlpJfScore) * 100
 	End Sub
 
-	Private Sub Button4_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button4.Click
+	Private Sub Button4_Click(ByVal sender As System.Object, ByVal e As System.EventArgs)
 		RichTextBox1.Text = ""
 	End Sub
 
-	Private Sub Button5_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button5.Click
+	Private Sub Button5_Click(ByVal sender As System.Object, ByVal e As System.EventArgs)
 		点击事件(2)
 	End Sub
 
-	Private Sub Button6_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button6.Click
+	Private Sub Button6_Click(ByVal sender As System.Object, ByVal e As System.EventArgs)
 		点击事件(3)
+	End Sub
+
+	Private Sub 区百分比ToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles 区百分比ToolStripMenuItem.Click
+		点击事件(1)
+	End Sub
+
+	Private Sub 计算成绩ToolStripMenuItem1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles 计算成绩ToolStripMenuItem1.Click
+		点击事件(0)
+	End Sub
+
+	Private Sub 学校报告ToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles 学校报告ToolStripMenuItem.Click
+		点击事件(2)
+	End Sub
+
+	Private Sub 年级报告ToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles 年级报告ToolStripMenuItem.Click
+
+	End Sub
+
+	Private Sub 班级报告ToolStripMenuItem1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles 班级报告ToolStripMenuItem1.Click
+
+	End Sub
+
+	Private Sub 停止处理ToolStripMenuItem1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles 停止处理ToolStripMenuItem1.Click
+		cancelReport(0)
+	End Sub
+
+	Private Sub 清空日志ToolStripMenuItem1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles 清空日志ToolStripMenuItem1.Click
+		RichTextBox1.Text = ""
+	End Sub
+
+	Private Sub 区百分比ToolStripMenuItem1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles 区百分比ToolStripMenuItem1.Click
+		点击事件(3)
+	End Sub
+
+	Private Sub RichTextBox1_MouseDown(ByVal sender As System.Object, ByVal e As System.Windows.Forms.MouseEventArgs) Handles RichTextBox1.MouseDown
+		If e.Button = Windows.Forms.MouseButtons.Right Then
+			Dim p As Point
+			p = PointToScreen(e.Location)
+			p.Y += 28
+			ContextMenuStrip1.Show(p)
+		End If
+	End Sub
+
+	Private Sub 清空日志ToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles 清空日志ToolStripMenuItem.Click
+		RichTextBox1.Text = ""
+	End Sub
+
+	Private Sub 清空状态ToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles 清空状态ToolStripMenuItem.Click
+		ToolStripStatusLabel1.Text = "状态"
 	End Sub
 End Class
 
