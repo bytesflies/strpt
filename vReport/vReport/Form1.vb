@@ -1218,10 +1218,10 @@ out:
 		For i = 1 To wordDoc.Paragraphs.Count
 			Dim content As String
 			content = wordDoc.Paragraphs(i).Range.Text()
-			If content.Contains("年级名称") Then
+			If content.Contains("班级名称") Then
 				wordDoc.Paragraphs(i).Range.Select()
 				wordDoc.Application.Selection.Delete()
-				wordDoc.Application.Selection.TypeText(年级名称)
+				wordDoc.Application.Selection.TypeText(班级名称)
 				wordDoc.Application.Selection.TypeParagraph()
 				' 使用同样样式
 				wordDoc.Paragraphs(i).Style = "学校名称"
@@ -1243,7 +1243,7 @@ out:
 			logR("处理表格" & i & "一共" & wordDoc.Tables.Count & "名称" & val)
 			If val.Contains("学校") Then
 				table.Cell(1, 2).Range.Text = 学校名称
-				table.Cell(2, 2).Range.Text = 年级名称
+				table.Cell(2, 2).Range.Text = 班级名称
 				table.Cell(3, 3).Range.Text = 学校信息.报名人数
 				table.Cell(3, 5).Range.Text = 学校信息.参测人数
 				table.Cell(3, 7).Range.Text = 学校信息.完测人数
