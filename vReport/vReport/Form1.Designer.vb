@@ -33,7 +33,7 @@ Partial Class Form1
 		Me.计算成绩ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem
 		Me.区百分比ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem
 		Me.计算成绩ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem
-		Me.区百分比ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem
+		Me.学生报告ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem
 		Me.学校报告ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem
 		Me.年级报告ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem
 		Me.班级报告ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem
@@ -112,44 +112,44 @@ Partial Class Form1
 		'计算成绩ToolStripMenuItem1
 		'
 		Me.计算成绩ToolStripMenuItem1.Name = "计算成绩ToolStripMenuItem1"
-		Me.计算成绩ToolStripMenuItem1.Size = New System.Drawing.Size(124, 22)
+		Me.计算成绩ToolStripMenuItem1.Size = New System.Drawing.Size(152, 22)
 		Me.计算成绩ToolStripMenuItem1.Text = "计算成绩"
 		'
 		'区百分比ToolStripMenuItem1
 		'
 		Me.区百分比ToolStripMenuItem1.Name = "区百分比ToolStripMenuItem1"
-		Me.区百分比ToolStripMenuItem1.Size = New System.Drawing.Size(124, 22)
+		Me.区百分比ToolStripMenuItem1.Size = New System.Drawing.Size(152, 22)
 		Me.区百分比ToolStripMenuItem1.Text = "区百分比"
 		'
 		'计算成绩ToolStripMenuItem
 		'
-		Me.计算成绩ToolStripMenuItem.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.区百分比ToolStripMenuItem, Me.学校报告ToolStripMenuItem, Me.年级报告ToolStripMenuItem, Me.班级报告ToolStripMenuItem1})
+		Me.计算成绩ToolStripMenuItem.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.学生报告ToolStripMenuItem, Me.学校报告ToolStripMenuItem, Me.年级报告ToolStripMenuItem, Me.班级报告ToolStripMenuItem1})
 		Me.计算成绩ToolStripMenuItem.Name = "计算成绩ToolStripMenuItem"
 		Me.计算成绩ToolStripMenuItem.Size = New System.Drawing.Size(68, 21)
 		Me.计算成绩ToolStripMenuItem.Text = "生成报告"
 		'
-		'区百分比ToolStripMenuItem
+		'学生报告ToolStripMenuItem
 		'
-		Me.区百分比ToolStripMenuItem.Name = "区百分比ToolStripMenuItem"
-		Me.区百分比ToolStripMenuItem.Size = New System.Drawing.Size(124, 22)
-		Me.区百分比ToolStripMenuItem.Text = "学生报告"
+		Me.学生报告ToolStripMenuItem.Name = "学生报告ToolStripMenuItem"
+		Me.学生报告ToolStripMenuItem.Size = New System.Drawing.Size(152, 22)
+		Me.学生报告ToolStripMenuItem.Text = "学生报告"
 		'
 		'学校报告ToolStripMenuItem
 		'
 		Me.学校报告ToolStripMenuItem.Name = "学校报告ToolStripMenuItem"
-		Me.学校报告ToolStripMenuItem.Size = New System.Drawing.Size(124, 22)
+		Me.学校报告ToolStripMenuItem.Size = New System.Drawing.Size(152, 22)
 		Me.学校报告ToolStripMenuItem.Text = "学校报告"
 		'
 		'年级报告ToolStripMenuItem
 		'
 		Me.年级报告ToolStripMenuItem.Name = "年级报告ToolStripMenuItem"
-		Me.年级报告ToolStripMenuItem.Size = New System.Drawing.Size(124, 22)
+		Me.年级报告ToolStripMenuItem.Size = New System.Drawing.Size(152, 22)
 		Me.年级报告ToolStripMenuItem.Text = "年级报告"
 		'
 		'班级报告ToolStripMenuItem1
 		'
 		Me.班级报告ToolStripMenuItem1.Name = "班级报告ToolStripMenuItem1"
-		Me.班级报告ToolStripMenuItem1.Size = New System.Drawing.Size(124, 22)
+		Me.班级报告ToolStripMenuItem1.Size = New System.Drawing.Size(152, 22)
 		Me.班级报告ToolStripMenuItem1.Text = "班级报告"
 		'
 		'停止处理ToolStripMenuItem
@@ -162,19 +162,19 @@ Partial Class Form1
 		'停止处理ToolStripMenuItem1
 		'
 		Me.停止处理ToolStripMenuItem1.Name = "停止处理ToolStripMenuItem1"
-		Me.停止处理ToolStripMenuItem1.Size = New System.Drawing.Size(152, 22)
+		Me.停止处理ToolStripMenuItem1.Size = New System.Drawing.Size(124, 22)
 		Me.停止处理ToolStripMenuItem1.Text = "停止处理"
 		'
 		'清空日志ToolStripMenuItem1
 		'
 		Me.清空日志ToolStripMenuItem1.Name = "清空日志ToolStripMenuItem1"
-		Me.清空日志ToolStripMenuItem1.Size = New System.Drawing.Size(152, 22)
+		Me.清空日志ToolStripMenuItem1.Size = New System.Drawing.Size(124, 22)
 		Me.清空日志ToolStripMenuItem1.Text = "清空日志"
 		'
 		'清空状态ToolStripMenuItem1
 		'
 		Me.清空状态ToolStripMenuItem1.Name = "清空状态ToolStripMenuItem1"
-		Me.清空状态ToolStripMenuItem1.Size = New System.Drawing.Size(152, 22)
+		Me.清空状态ToolStripMenuItem1.Size = New System.Drawing.Size(124, 22)
 		Me.清空状态ToolStripMenuItem1.Text = "清空状态"
 		'
 		'StatusStrip1
@@ -241,7 +241,7 @@ Partial Class Form1
 	Friend WithEvents 计算成绩ToolStripMenuItem1 As System.Windows.Forms.ToolStripMenuItem
 	Friend WithEvents 区百分比ToolStripMenuItem1 As System.Windows.Forms.ToolStripMenuItem
 	Friend WithEvents 计算成绩ToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
-	Friend WithEvents 区百分比ToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
+	Friend WithEvents 学生报告ToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
 	Friend WithEvents 学校报告ToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
 	Friend WithEvents 年级报告ToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
 	Friend WithEvents 班级报告ToolStripMenuItem1 As System.Windows.Forms.ToolStripMenuItem
