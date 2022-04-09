@@ -9,7 +9,8 @@ Public Enum OpType
 	SchoolReport = 3
 	GradeReport = 4
 	ClassReport = 5
-	AreaPercent = 6
+	AllReport = 6
+	AreaPercent = 7
 End Enum
 
 Public Class Form1
@@ -1785,8 +1786,18 @@ out:
 	End Sub
 
 	Private Sub Worker()
+		Dim type As Int32 = wkType
 		Try
-			生成()
+			If type = OpType.AllReport Then
+				wkType = OpType.SchoolReport
+				生成()
+				wkType = OpType.GradeReport
+				生成()
+				wkType = OpType.ClassReport
+				生成()
+			Else
+				生成()
+			End If
 		Catch ex As Exception
 			logE(ex.Message)
 			logE(ex.StackTrace)
@@ -4130,18 +4141,6 @@ found:
 		点击事件(OpType.StudentScore)
 	End Sub
 
-	Private Sub 学校报告ToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles 学校报告ToolStripMenuItem.Click
-		点击事件(OpType.SchoolReport)
-	End Sub
-
-	Private Sub 年级报告ToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles 年级报告ToolStripMenuItem.Click
-		点击事件(OpType.GradeReport)
-	End Sub
-
-	Private Sub 班级报告ToolStripMenuItem1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles 班级报告ToolStripMenuItem1.Click
-		点击事件(OpType.ClassReport)
-	End Sub
-
 	Private Sub 停止处理ToolStripMenuItem1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles 停止处理ToolStripMenuItem1.Click
 		cancelReport(0)
 	End Sub
@@ -4177,6 +4176,22 @@ found:
 
 	Private Sub 学生报告ToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles 学生报告ToolStripMenuItem.Click
 		点击事件(OpType.StudentReport)
+	End Sub
+
+	Private Sub 学校报告ToolStripMenuItem1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles 学校报告ToolStripMenuItem1.Click
+		点击事件(OpType.SchoolReport)
+	End Sub
+
+	Private Sub 年级报告ToolStripMenuItem1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles 年级报告ToolStripMenuItem1.Click
+		点击事件(OpType.GradeReport)
+	End Sub
+
+	Private Sub 班级报告ToolStripMenuItem2_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles 班级报告ToolStripMenuItem2.Click
+		点击事件(OpType.ClassReport)
+	End Sub
+
+	Private Sub 全部报告ToolStripMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles 全部报告ToolStripMenuItem.Click
+		点击事件(OpType.AllReport)
 	End Sub
 End Class
 
