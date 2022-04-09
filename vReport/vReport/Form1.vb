@@ -197,17 +197,9 @@ Public Class Form1
 				RichTextBox1.Text = Strings.Left(RichTextBox1.Text, 4096)
 			End If
 		ElseIf msgEntity.type = MsgType.mtProgress Then
-			'Label1.Text = msgEntity.data
 			ToolStripStatusLabel1.Text = msgEntity.data
 		Else
 		End If
-
-		'RichTextBox1.Text = msg & Chr(13) & Chr(10) & RichTextBox1.Text
-
-		'sb.AppendLine(msg)
-		'RichTextBox1.Text = sb.ToString
-		'RichTextBox1.SelectionStart = RichTextBox1.Text.Length
-		'RichTextBox1.ScrollToCaret()
 	End Sub
 
 	Sub purgeAsync()
@@ -587,8 +579,7 @@ out:
 
 		docPath = Application.StartupPath & "\" & 区
 		If Not Directory.Exists(docPath) Then Directory.CreateDirectory(docPath)
-		docPath = docPath & "\" & 学校
-		docFullName = docPath & ".docx"
+		docFullName = docPath & "\" & 区 & "_" & 学校 & ".docx"
 
 		logW("打开报告模板")
 		wordDoc = wordApp.Documents.Add(Application.StartupPath & "\学校报告模板.docx")
@@ -608,8 +599,8 @@ out:
 			Try
 				Dim docFullName As String
 				Dim docPath As String
-				docPath = Application.StartupPath & "\" & 区 & "\" & 学校
-				docFullName = docPath & ".pdf"
+				docPath = Application.StartupPath & "\" & 区
+				docFullName = docPath & "\" & 区 & "_" & 学校 & ".pdf"
 
 				wordDoc.SaveAs(docFullName, Word.WdSaveFormat.wdFormatPDF)
 			Catch
@@ -632,7 +623,8 @@ out:
 		docPath = Application.StartupPath & "\" & 区
 		If Not Directory.Exists(docPath) Then Directory.CreateDirectory(docPath)
 		docPath = docPath & "\" & 学校
-		docFullName = docPath & "_" & 年级 & ".docx"
+		If Not Directory.Exists(docPath) Then Directory.CreateDirectory(docPath)
+		docFullName = docPath & "\" & 区 & "_" & 学校 & "_" & 年级 & ".docx"
 
 		logW("打开报告模板")
 		wordDoc = wordApp.Documents.Add(Application.StartupPath & "\年级报告模板.docx")
@@ -652,8 +644,8 @@ out:
 			Try
 				Dim docFullName As String
 				Dim docPath As String
-				docPath = Application.StartupPath & "\" & 区 & "\" & 学校 & "_" & 年级
-				docFullName = docPath & ".pdf"
+				docPath = Application.StartupPath & "\" & 区 & "\" & 学校
+				docFullName = docPath & "\" & 区 & "_" & 学校 & "_" & 年级 & ".pdf"
 
 				wordDoc.SaveAs(docFullName, Word.WdSaveFormat.wdFormatPDF)
 			Catch
@@ -676,7 +668,10 @@ out:
 		docPath = Application.StartupPath & "\" & 区
 		If Not Directory.Exists(docPath) Then Directory.CreateDirectory(docPath)
 		docPath = docPath & "\" & 学校
-		docFullName = docPath & "_" & 年级 & "_" & 班级 & ".docx"
+		If Not Directory.Exists(docPath) Then Directory.CreateDirectory(docPath)
+		docPath = docPath & "\" & 年级
+		If Not Directory.Exists(docPath) Then Directory.CreateDirectory(docPath)
+		docFullName = docPath & "\" & 区 & "_" & 学校 & "_" & 年级 & "_" & 班级 & ".docx"
 
 		logW("打开报告模板")
 		wordDoc = wordApp.Documents.Add(Application.StartupPath & "\班级报告模板.docx")
@@ -696,8 +691,8 @@ out:
 			Try
 				Dim docFullName As String
 				Dim docPath As String
-				docPath = Application.StartupPath & "\" & 区 & "\" & 学校 & "_" & 年级 & "_" & 班级
-				docFullName = docPath & ".pdf"
+				docPath = Application.StartupPath & "\" & 区 & "\" & 学校 & "\" & 年级
+				docFullName = docPath & "\" & 区 & "_" & 学校 & "_" & 年级 & "_" & 班级 & ".pdf"
 
 				wordDoc.SaveAs(docFullName, Word.WdSaveFormat.wdFormatPDF)
 			Catch
@@ -937,9 +932,9 @@ out:
 		Dim j As Int32
 		Dim k As Int32
 
-		logR("开始 - 打开学校报告")
+		logI("开始 - 打开学校报告")
 		打开学校报告(学校信息.区, 学校名称)
-		logR("结束 - 打开学校报告")
+		logI("结束 - 打开学校报告")
 
 		' 生成学校名称
 		For i = 1 To wordDoc.Paragraphs.Count
@@ -952,7 +947,7 @@ out:
 				Exit For
 			End If
 		Next
-		logR("结束 - 生成学校名称")
+		logI("结束 - 生成学校名称")
 
 		' 生成表格
 		For i = 1 To wordDoc.Tables.Count
@@ -963,7 +958,7 @@ out:
 			table.Select()
 			val = table.Cell(1, 1).Range.Text
 
-			logR("处理表格" & i & "一共" & wordDoc.Tables.Count & "名称" & val)
+			'logI("处理表格" & i & "一共" & wordDoc.Tables.Count & "名称" & val)
 			If val.Contains("学校") Then
 				table.Cell(1, 2).Range.Text = 学校名称
 				table.Cell(2, 3).Range.Text = 学校信息.报名人数
@@ -1020,6 +1015,8 @@ out:
 				t = table.Cell(2, 3).Range.Text
 				For j = 0 To 11
 					If t.Contains(学校统计项(j).关键字) Then
+						' not a perfect match
+						If 学校统计项(j).关键字 = "A8" And t.Contains("A800") Then Continue For
 						idx = j
 						Exit For
 					End If
@@ -1040,18 +1037,18 @@ out:
 			End If
 		Next
 
-		logR("结束 - 处理表格")
+		logI("结束 - 处理表格")
 		' 生成图表
 		生成学校报告图表(学校信息, 学区信息)
 
-		logR("结束 - 生成学校图表")
+		logI("结束 - 生成学校图表")
 		' 生成文本
 		生成单个学校测试结果分析(学校名称, 学校信息, 学区信息, 学校名称, "校")
 
-		logR("结束 - 生成学校结果分析")
+		logI("结束 - 生成学校结果分析")
 		关闭学校报告(学校信息.区, 学校名称)
 
-		logR("结束 - 关闭学校报告")
+		logI("结束 - 关闭学校报告")
 	End Sub
 
 	Private Sub 生成单个年级报告(ByRef 学校名称 As String, ByVal 年级 As UInt32, ByRef 年级名称 As String, ByRef 学校信息 As 统计信息, ByRef 学区信息 As 统计信息)
@@ -1059,9 +1056,9 @@ out:
 		Dim j As Int32
 		Dim k As Int32
 
-		logR("开始 - 打开年级报告")
+		logI("开始 - 打开年级报告")
 		打开年级报告(学校信息.区, 学校名称, 年级名称)
-		logR("结束 - 打开年级报告")
+		logI("结束 - 打开年级报告")
 
 		' 生成学校名称 年级名称
 		For i = 1 To wordDoc.Paragraphs.Count
@@ -1091,7 +1088,7 @@ out:
 				Exit For
 			End If
 		Next
-		logR("结束 - 生成学校名称年级名称")
+		logI("结束 - 生成学校名称年级名称")
 
 		' 生成表格
 		For i = 1 To wordDoc.Tables.Count
@@ -1102,7 +1099,7 @@ out:
 			table.Select()
 			val = table.Cell(1, 1).Range.Text
 
-			logR("处理表格" & i & "一共" & wordDoc.Tables.Count & "名称" & val)
+			'logR("处理表格" & i & "一共" & wordDoc.Tables.Count & "名称" & val)
 			If val.Contains("学校") Then
 				table.Cell(1, 2).Range.Text = 学校名称
 				table.Cell(2, 2).Range.Text = 年级名称
@@ -1155,6 +1152,8 @@ out:
 				t = table.Cell(2, 3).Range.Text
 				For j = 0 To 11
 					If t.Contains(学校统计项(j).关键字) Then
+						' not a perfect match
+						If 学校统计项(j).关键字 = "A8" And t.Contains("A800") Then Continue For
 						idx = j
 						Exit For
 					End If
@@ -1175,18 +1174,18 @@ out:
 			End If
 		Next
 
-		logR("结束 - 处理表格")
+		logI("结束 - 处理表格")
 		' 生成图表
 		生成学校报告图表(学校信息, 学区信息)
 
-		logR("结束 - 生成年级图表")
+		logI("结束 - 生成年级图表")
 		' 生成文本
 		生成单个学校测试结果分析(学校名称, 学校信息, 学区信息, 年级名称, "年级")
 
-		logR("结束 - 生成年级结果分析")
+		logI("结束 - 生成年级结果分析")
 		关闭年级报告(学校信息.区, 学校名称, 年级名称)
 
-		logR("结束 - 关闭年级报告")
+		logI("结束 - 关闭年级报告")
 	End Sub
 
 	Private Sub 生成单个班级报告(ByRef 学校名称 As String, ByRef 年级名称 As String, ByRef 班级名称 As String, ByRef 学校信息 As 统计信息, ByRef 学区信息 As 统计信息)
@@ -1194,9 +1193,9 @@ out:
 		Dim j As Int32
 		Dim k As Int32
 
-		logR("开始 - 打开班级报告")
+		logI("开始 - 打开班级报告")
 		打开班级报告(学校信息.区, 学校名称, 年级名称, 班级名称)
-		logR("结束 - 打开班级报告")
+		logI("结束 - 打开班级报告")
 
 		Dim a As Int32 = 0
 		Dim b As Int32 = 0
@@ -1229,7 +1228,7 @@ out:
 				Exit For
 			End If
 		Next
-		logR("结束 - 生成学校名称年级名称")
+		logI("结束 - 生成学校名称年级名称")
 
 		' 生成表格
 		For i = 1 To wordDoc.Tables.Count
@@ -1240,7 +1239,7 @@ out:
 			table.Select()
 			val = table.Cell(1, 1).Range.Text
 
-			logR("处理表格" & i & "一共" & wordDoc.Tables.Count & "名称" & val)
+			'logR("处理表格" & i & "一共" & wordDoc.Tables.Count & "名称" & val)
 			If val.Contains("学校") Then
 				table.Cell(1, 2).Range.Text = 学校名称
 				table.Cell(2, 2).Range.Text = 班级名称
@@ -1293,6 +1292,8 @@ out:
 				t = table.Cell(2, 3).Range.Text
 				For j = 0 To 11
 					If t.Contains(学校统计项(j).关键字) Then
+						' not a perfect match
+						If 学校统计项(j).关键字 = "A8" And t.Contains("A800") Then Continue For
 						idx = j
 						Exit For
 					End If
@@ -1313,18 +1314,18 @@ out:
 			End If
 		Next
 
-		logR("结束 - 处理表格")
+		logI("结束 - 处理表格")
 		' 生成图表
 		生成学校报告图表(学校信息, 学区信息)
 
-		logR("结束 - 生成班级图表")
+		logI("结束 - 生成班级图表")
 		' 生成文本
 		生成单个学校测试结果分析(学校名称, 学校信息, 学区信息, 班级名称, "班")
 
-		logR("结束 - 生成班级结果分析")
+		logI("结束 - 生成班级结果分析")
 		关闭班级报告(学校信息.区, 学校名称, 年级名称, 班级名称)
 
-		logR("结束 - 关闭班级报告")
+		logI("结束 - 关闭班级报告")
 	End Sub
 
 	Private Sub 生成学校报告(ByVal 生成何种数据 As UInt32, ByVal 共几个文件 As UInt32, ByVal 第几个文件 As UInt32, ByRef 待处理文件 As String, ByRef excelWs As Excel.Worksheet)
@@ -1348,11 +1349,11 @@ out:
 				预取数据到缓存(excelWs)
 
 				If 获取当前行数据("姓名") = String.Empty Then
-					sendProgress(String.Format("共{0}个文件。当前处理第{1}个文件的第{2}行。处理完毕。", 共几个文件, 第几个文件, 当前行号))
+					logI(String.Format("共{0}个文件。当前处理第{1}个文件的第{2}行。处理完毕。", 共几个文件, 第几个文件, 当前行号))
 					Exit Do
 				End If
 
-				'logR("当前行: " & 当前行号 & " 姓名 " & 获取当前行数据("姓名") & " 年级: " & 获取当前行数据("年级") & " 性别: " & 获取当前行数据("性别"))
+				logI("当前行: " & 当前行号 & " 姓名 " & 获取当前行数据("姓名") & " 年级: " & 获取当前行数据("年级") & " 性别: " & 获取当前行数据("性别"))
 				Dim 学校名称 As String
 				学校名称 = 获取当前行数据("学校")
 				If 学校名称 = String.Empty Then
@@ -1385,7 +1386,7 @@ out:
 				End If
 				处理统计信息(1, 学校统计信息详细(学校名称).班级信息详细(g)(获取当前行数据("班级")))
 
-				sendProgress(String.Format("共{0}个文件。当前处理第{1}个文件的第{2}行", 共几个文件, 第几个文件, 当前行号))
+				logI(String.Format("共{0}个文件。当前处理第{1}个文件的第{2}行", 共几个文件, 第几个文件, 当前行号))
 
 				purgeAsync()
 
@@ -1394,51 +1395,71 @@ out:
 
 			Dim i As UInt32
 			For i = 0 To 学校统计信息.Count - 1
-				sendProgress(String.Format("文件 {0}/{1}，学校 {2}/{3}，进行中 ...", 第几个文件, 共几个文件, i + 1, 学校统计信息.Count))
+				logR(String.Format("文件 {0}/{1}，学校 {2}/{3}，进行中 ...", 第几个文件, 共几个文件, i + 1, 学校统计信息.Count))
+				logR("正在处理 " & 学校统计信息.ElementAt(i).Key)
 				If 生成何种数据 = OpType.SchoolReport Then
 					处理学校百分比(全区统计信息)
-					logR("正在处理 " & 学校统计信息.ElementAt(i).Key)
 					处理学校百分比(学校统计信息.ElementAt(i).Value)
-					logR("处理学校百分比结束")
 					生成单个学校报告(学校统计信息.ElementAt(i).Key, 学校统计信息.ElementAt(i).Value, 全区统计信息)
-					sendProgress(String.Format("文件 {0}/{1}，学校 {2}/{3}，处理完", 第几个文件, 共几个文件, i + 1, 学校统计信息.Count))
 					If wkExiting Then GoTo out
 				ElseIf 生成何种数据 = OpType.GradeReport Then
 					Dim j As UInt32
-					logR("正在处理 " & 学校统计信息.ElementAt(i).Key)
 					处理学校百分比(学校统计信息.ElementAt(i).Value)
 					If 学校统计信息详细.ContainsKey(学校统计信息.ElementAt(i).Key) Then
+						Dim gt As Int32 = 0
+						Dim gc As Int32 = 0
+						For j = 0 To 学校统计信息详细(学校统计信息.ElementAt(i).Key).年级统计信息.Count - 1
+							If Not 学校统计信息详细(学校统计信息.ElementAt(i).Key).年级统计信息(j) Is Nothing Then
+								gt += 1
+							End If
+						Next
 						For j = 0 To 学校统计信息详细(学校统计信息.ElementAt(i).Key).年级统计信息.Count - 1
 							If Not 学校统计信息详细(学校统计信息.ElementAt(i).Key).年级统计信息(j) Is Nothing Then
 								logR("正在处理 " & gradeNameTbl(j))
 								处理学校百分比(学校统计信息详细(学校统计信息.ElementAt(i).Key).年级统计信息(j))
 								生成单个年级报告(学校统计信息.ElementAt(i).Key, j, gradeNameTbl(j), 学校统计信息详细(学校统计信息.ElementAt(i).Key).年级统计信息(j), 学校统计信息.ElementAt(i).Value)
+								logR(String.Format("文件 {0}/{1}，学校 {2}/{3}，年级 {4}/{5}，处理完", 第几个文件, 共几个文件, _
+								 i + 1, 学校统计信息.Count, _
+								 gc + 1, gt))
+								gc += 1
 							End If
-							sendProgress(String.Format("文件 {0}/{1}，学校 {2}/{3}，年级 {4}/{5}，处理完", 第几个文件, 共几个文件, i + 1, 学校统计信息.Count, j + 1, 学校统计信息详细(学校统计信息.ElementAt(i).Key).年级统计信息.Count))
 							If wkExiting Then GoTo out
 						Next
 					End If
 				ElseIf 生成何种数据 = OpType.ClassReport Then
 					Dim j As UInt32
 					If 学校统计信息详细.ContainsKey(学校统计信息.ElementAt(i).Key) Then
+						Dim gt As Int32 = 0
+						Dim gc As Int32 = 0
+						For j = 0 To 学校统计信息详细(学校统计信息.ElementAt(i).Key).年级统计信息.Count - 1
+							If Not 学校统计信息详细(学校统计信息.ElementAt(i).Key).年级统计信息(j) Is Nothing Then
+								gt += 1
+							End If
+						Next
 						For j = 0 To 学校统计信息详细(学校统计信息.ElementAt(i).Key).年级统计信息.Count - 1
 							If Not 学校统计信息详细(学校统计信息.ElementAt(i).Key).年级统计信息(j) Is Nothing Then
 								logR("正在处理 " & gradeNameTbl(j))
 								处理学校百分比(学校统计信息详细(学校统计信息.ElementAt(i).Key).年级统计信息(j))
 								Dim k As Int32
 								For k = 0 To 学校统计信息详细(学校统计信息.ElementAt(i).Key).班级信息详细(j).Count - 1
+									logR("正在处理 " & 学校统计信息详细(学校统计信息.ElementAt(i).Key).班级信息详细(j).ElementAt(k).Key)
 									处理学校百分比(学校统计信息详细(学校统计信息.ElementAt(i).Key).班级信息详细(j).ElementAt(k).Value)
 									生成单个班级报告(学校统计信息.ElementAt(i).Key, gradeNameTbl(j), 学校统计信息详细(学校统计信息.ElementAt(i).Key).班级信息详细(j).ElementAt(k).Key, 学校统计信息详细(学校统计信息.ElementAt(i).Key).班级信息详细(j).ElementAt(k).Value, 学校统计信息详细(学校统计信息.ElementAt(i).Key).年级统计信息(j))
-									sendProgress(String.Format("文件 {0}/{1}，学校 {2}/{3}，年级 {4}/{5}，班级 {6}/{7}，处理完", _
-											 第几个文件, 共几个文件, i + 1, 学校统计信息.Count, _
-											 j + 1, 学校统计信息详细(学校统计信息.ElementAt(i).Key).年级统计信息.Count, _
-											 k, 学校统计信息详细(学校统计信息.ElementAt(i).Key).班级信息详细(j).Count))
+									logR(String.Format("文件 {0}/{1}，学校 {2}/{3}，年级 {4}/{5}，班级 {6}/{7}，处理完", _
+									 第几个文件, 共几个文件, i + 1, 学校统计信息.Count, _
+									 gc + 1, gt, _
+									 k + 1, 学校统计信息详细(学校统计信息.ElementAt(i).Key).班级信息详细(j).Count))
 									If wkExiting Then GoTo out
 								Next
+								logR(String.Format("文件 {0}/{1}，学校 {2}/{3}，年级 {4}/{5}，处理完", 第几个文件, 共几个文件, _
+								 i + 1, 学校统计信息.Count, _
+								 gc + 1, gt))
+								gc += 1
 							End If
 						Next
 					End If
 				End If
+				logR(String.Format("文件 {0}/{1}，学校 {2}/{3}，处理完", 第几个文件, 共几个文件, i + 1, 学校统计信息.Count))
 				purgeAsync()
 				If wkExiting Then Exit For
 				'Exit For
@@ -2178,7 +2199,7 @@ out:
 				转换百分比 = Int(数值 / 100) & "." & 余数
 			End If
 		End If
-		logI("转换百分比: " & 数值 & " > " & 转换百分比)
+		'logI("转换百分比: " & 数值 & " > " & 转换百分比)
 	End Function
 
 	Function 转换完整百分比(ByVal 数值 As UInt32)
