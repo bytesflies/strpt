@@ -578,7 +578,7 @@ out:
 
 		'logW("开始 - 打开报告")
 
-		docPath = Application.StartupPath & "\" & 区
+		docPath = Application.StartupPath & "\学校报告\" & 区
 		If Not Directory.Exists(docPath) Then Directory.CreateDirectory(docPath)
 		docFullName = docPath & "\" & 区 & "_" & 学校 & ".docx"
 
@@ -600,7 +600,7 @@ out:
 			Try
 				Dim docFullName As String
 				Dim docPath As String
-				docPath = Application.StartupPath & "\" & 区
+				docPath = Application.StartupPath & "\学校报告\" & 区
 				docFullName = docPath & "\" & 区 & "_" & 学校 & ".pdf"
 
 				wordDoc.SaveAs(docFullName, Word.WdSaveFormat.wdFormatPDF)
@@ -621,7 +621,7 @@ out:
 
 		'logW("开始 - 打开报告")
 
-		docPath = Application.StartupPath & "\" & 区
+		docPath = Application.StartupPath & "\年级报告\" & 区
 		If Not Directory.Exists(docPath) Then Directory.CreateDirectory(docPath)
 		docPath = docPath & "\" & 学校
 		If Not Directory.Exists(docPath) Then Directory.CreateDirectory(docPath)
@@ -645,7 +645,7 @@ out:
 			Try
 				Dim docFullName As String
 				Dim docPath As String
-				docPath = Application.StartupPath & "\" & 区 & "\" & 学校
+				docPath = Application.StartupPath & "\年级报告\" & 区 & "\" & 学校
 				docFullName = docPath & "\" & 区 & "_" & 学校 & "_" & 年级 & ".pdf"
 
 				wordDoc.SaveAs(docFullName, Word.WdSaveFormat.wdFormatPDF)
@@ -666,7 +666,7 @@ out:
 
 		'logW("开始 - 打开报告")
 
-		docPath = Application.StartupPath & "\" & 区
+		docPath = Application.StartupPath & "\班级报告\" & 区
 		If Not Directory.Exists(docPath) Then Directory.CreateDirectory(docPath)
 		docPath = docPath & "\" & 学校
 		If Not Directory.Exists(docPath) Then Directory.CreateDirectory(docPath)
@@ -692,7 +692,7 @@ out:
 			Try
 				Dim docFullName As String
 				Dim docPath As String
-				docPath = Application.StartupPath & "\" & 区 & "\" & 学校 & "\" & 年级
+				docPath = Application.StartupPath & "\班级报告\" & 区 & "\" & 学校 & "\" & 年级
 				docFullName = docPath & "\" & 区 & "_" & 学校 & "_" & 年级 & "_" & 班级 & ".pdf"
 
 				wordDoc.SaveAs(docFullName, Word.WdSaveFormat.wdFormatPDF)
