@@ -16,6 +16,8 @@ End Enum
 Public Class Form1
 	' 测试数据Excel信息
 
+	Dim QQQQ As Char = Chr(-24092)
+
 	Dim 测项起始列号 As UInt32 = 0
 	Dim 测项附加分起始列号 As UInt32 = 0
 
@@ -2001,19 +2003,29 @@ out:
 		' 学校名称
 		学校名称 = 获取当前行数据("学校")
 		' 年级班级
-		年级班级 = 获取当前行数据("年级")
+		年级班级 = 获取当前行数据("年级") & " " & 获取当前行数据("班级")
 		' 学生姓名
 		学生姓名 = 获取当前行数据("姓名")
 
 		For i = 1 To wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs.Count
+			If i > wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs.Count Then
+				logE("名称不能属于同一段落")
+				Exit For
+			End If
 			token = wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(i).Range.Text
-			If token.Length >= 4 Then
+			If token.Length >= 2 Then
 				If token.Contains("XXMC") Then
 					' 学校名称
 					wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(i).Range.Text = 学校名称
 				ElseIf token.Contains("NJBJ") Then
 					' 年级班级
 					wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(i).Range.Text = 年级班级
+				ElseIf token.Contains("NJ") Then
+					' 年级
+					wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(i).Range.Text = 获取当前行数据("年级")
+				ElseIf token.Contains("BJ") Then
+					' 班级
+					wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(i).Range.Text = 获取当前行数据("班级")
 				ElseIf token.Contains("XSXM") Then
 					' 学生姓名
 					wordDoc.Shapes(1).TextFrame.TextRange.Paragraphs(i).Range.Text = 学生姓名
@@ -2109,6 +2121,12 @@ out:
 			'a = Convert.ToInt32(内容(1))
 			'b = Convert.ToInt32("'"(0))
 			'logW(内容)
+			If i = 1 Then
+				' 50米跑留一位小数
+				If Not 内容.Contains(".") Then
+					内容 = 内容 & ".0"
+				End If
+			End If
 			wordDoc.Tables(表格位置).Cell(3 + i, 2).Range.Text = 内容
 
 			内容 = 获取当前行数据(测项起始列号 + 3 * 测项序号 + 1)
@@ -3125,6 +3143,10 @@ rowComplete:
 		st.fhl = Int(Val(st.fhlStr))
 		If st.fhl > 0 Then st.fhlValid = 1
 
+		Dim idx = st.m50Str.IndexOf(".")
+		If idx <> -1 Then
+			If idx + 2 < st.m50Str.Length Then st.m50Str = st.m50Str.Substring(0, idx + 2)
+		End If
 		st.m50 = stringToInt(st.m50Str, 1)
 		If st.m50 > 0 Then st.m50Valid = 1
 
@@ -3140,6 +3162,10 @@ rowComplete:
 		st.ywqz1 = st.ywqz0
 		If st.ywqz0 >= 0 Then st.ywqzValid = validateInput(st.ywqz0, st.ywqz0Str)
 
+		st.nlp0Str = st.nlp0Str.Replace(".", QQQQ)
+		If Not st.nlp0Str.Contains(QQQQ) Then
+			st.nlp0Str = st.nlp0Str & QQQQ & "0"
+		End If
 		st.nlp0 = timeToSeconds(st.nlp0Str)
 		st.nlp1 = st.nlp0
 		If st.nlp0 >= 0 Then st.nlpValid = validateInput(st.nlp0, st.nlp0Str)
@@ -3219,6 +3245,8 @@ rowComplete:
 		Dim 是否有800米 As Int32 = 0
 		Dim 是否有1000米 As Int32 = 0
 		Dim 是否有引体向上 As Int32 = 0
+
+		Dim m50Pos As Int32 = 0
 
 		Dim tmp As String
 
@@ -3331,6 +3359,7 @@ rowComplete:
 			col = col + 2
 
 			' 50米跑成绩
+			m50Pos = col
 			.arr(col) = st.m50Str
 			col = col + 1
 			If st.m50Valid = 1 Then
@@ -3624,6 +3653,8 @@ rowComplete:
 			.arr(1) = 缺项数量
 		End With
 
+		' 保留一位小数
+		excelWsDst.Columns(m50Pos + 1).NumberFormatLocal = "0.0_ "
 		excelWsDst.Range(excelWsDst.Cells(row, 1), excelWsDst.Cells(row, col)).Value2 = st.arr
 	End Sub
 
