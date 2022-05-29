@@ -3162,9 +3162,24 @@ rowComplete:
 		st.ywqz1 = st.ywqz0
 		If st.ywqz0 >= 0 Then st.ywqzValid = validateInput(st.ywqz0, st.ywqz0Str)
 
-		st.nlp0Str = st.nlp0Str.Replace(".", QQQQ)
-		If Not st.nlp0Str.Contains(QQQQ) Then
-			st.nlp0Str = st.nlp0Str & QQQQ & "0"
+		Dim idxOfDot As Int32 = st.nlp0Str.IndexOf(".")
+		' replace with '
+		If idxOfDot <> -1 Then
+			st.nlp0Str = st.nlp0Str.Replace(".", QQQQ)
+		Else
+			idxOfDot = st.nlp0Str.IndexOf(QQQQ)
+		End If
+		If idxOfDot = -1 Then
+			st.nlp0Str = st.nlp0Str & QQQQ & "00"
+		Else
+			Dim padding As Int32 = st.nlp0Str.Length - (idxOfDot + 1)
+			If padding = 0 Then
+				st.nlp0Str = st.nlp0Str & "00"
+			ElseIf padding = 1 Then
+				st.nlp0Str = st.nlp0Str & "0"
+			Else
+				' nothing to do
+			End If
 		End If
 		st.nlp0 = timeToSeconds(st.nlp0Str)
 		st.nlp1 = st.nlp0
