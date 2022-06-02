@@ -923,6 +923,7 @@ out:
 				wordDoc.Application.Selection.InlineShapes.AddPicture(tmpName, False, True)
 			Else
 				excelWsTmpl.Shapes().Item(i).Select() '.SelectAll()
+				System.Windows.Forms.Clipboard.Clear()
 				excelWsTmpl.Application.Selection.copy()
 				'wordDoc.Application.Selection.PasteAndFormat(Word.WdRecoveryType.wdChartPicture)
 				wordDoc.Application.Selection.PasteAndFormat(Word.WdRecoveryType.wdFormatOriginalFormatting)
@@ -1923,6 +1924,8 @@ out:
 		Thread.VolatileWrite(wkExiting, 0)
 		Thread.VolatileWrite(wkDone, 0)
 		wk = New Thread(AddressOf Worker)
+		'MessageBox.Show(wk.GetApartmentState())
+		wk.SetApartmentState(ApartmentState.STA)
 		wkType = 类别
 		wk.Start()
 		Thread.VolatileWrite(wkStart, 1)
@@ -2184,6 +2187,7 @@ out:
 				ct.Export(tmpName, "GIF")
 			Else
 				图表工作表.Shapes.SelectAll()
+				System.Windows.Forms.Clipboard.Clear()
 				图表工作表.Application.Selection.copy()
 			End If
 		Catch e As Exception
