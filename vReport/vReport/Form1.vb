@@ -1246,19 +1246,20 @@ out:
 			'logR("处理表格" & i & "一共" & wordDoc.Tables.Count & "名称" & val)
 			If val.Contains("学校") Then
 				table.Cell(1, 2).Range.Text = 学校名称
-				table.Cell(2, 2).Range.Text = 班级名称
-				table.Cell(3, 3).Range.Text = 学校信息.报名人数
-				table.Cell(3, 5).Range.Text = 学校信息.参测人数
-				table.Cell(3, 7).Range.Text = 学校信息.完测人数
-				table.Cell(4, 3).Range.Text = 学校信息.加分人数
-				table.Cell(4, 5).Range.Text = 转换完整百分比(学校信息.参测比例)
-				table.Cell(4, 7).Range.Text = 转换完整百分比(学校信息.完测比例)
-				table.Cell(5, 3).Range.Text = 学区信息.报名人数
-				table.Cell(5, 5).Range.Text = 学区信息.参测人数
-				table.Cell(5, 7).Range.Text = 学区信息.完测人数
-				table.Cell(6, 3).Range.Text = 学区信息.加分人数
-				table.Cell(6, 5).Range.Text = 转换完整百分比(学区信息.参测比例)
-				table.Cell(6, 7).Range.Text = 转换完整百分比(学区信息.完测比例)
+				table.Cell(2, 2).Range.Text = 年级名称
+				table.Cell(3, 2).Range.Text = 班级名称
+				table.Cell(4, 3).Range.Text = 学校信息.报名人数
+				table.Cell(4, 5).Range.Text = 学校信息.参测人数
+				table.Cell(4, 7).Range.Text = 学校信息.完测人数
+				table.Cell(5, 3).Range.Text = 学校信息.加分人数
+				table.Cell(5, 5).Range.Text = 转换完整百分比(学校信息.参测比例)
+				table.Cell(5, 7).Range.Text = 转换完整百分比(学校信息.完测比例)
+				table.Cell(6, 3).Range.Text = 学区信息.报名人数
+				table.Cell(6, 5).Range.Text = 学区信息.参测人数
+				table.Cell(6, 7).Range.Text = 学区信息.完测人数
+				table.Cell(7, 3).Range.Text = 学区信息.加分人数
+				table.Cell(7, 5).Range.Text = 转换完整百分比(学区信息.参测比例)
+				table.Cell(7, 7).Range.Text = 转换完整百分比(学区信息.完测比例)
 			ElseIf val.Contains("综合评定等级") Then
 				' 优良中差
 				For j = 0 To 3
@@ -3033,7 +3034,13 @@ rowComplete:
 
 	Function validateInput(ByVal val As Long, ByVal str As String)
 		validateInput = 0
-		If val <> 0 Or str = "0" Then validateInput = 1
+		If val <> 0 Then
+			validateInput = 1
+			Exit Function
+		End If
+		If Len(str) > 0 Then
+			If str(0) = "0" Then validateInput = 1
+		End If
 	End Function
 
 	Sub readStudent(ByRef excelWsSrc As Excel.Worksheet, ByVal row As Long, ByRef st As Student)
