@@ -1221,6 +1221,20 @@ out:
 		For i = 1 To wordDoc.Paragraphs.Count
 			Dim content As String
 			content = wordDoc.Paragraphs(i).Range.Text()
+			If content.Contains("年级名称") Then
+				wordDoc.Paragraphs(i).Range.Select()
+				wordDoc.Application.Selection.Delete()
+				wordDoc.Application.Selection.TypeText(年级名称)
+				wordDoc.Application.Selection.TypeParagraph()
+				' 使用同样样式
+				wordDoc.Paragraphs(i).Style = "学校名称"
+				wordDoc.Paragraphs(i).Format.Alignment = Word.WdParagraphAlignment.wdAlignParagraphRight
+				Exit For
+			End If
+		Next
+		For i = 1 To wordDoc.Paragraphs.Count
+			Dim content As String
+			content = wordDoc.Paragraphs(i).Range.Text()
 			If content.Contains("班级名称") Then
 				wordDoc.Paragraphs(i).Range.Select()
 				wordDoc.Application.Selection.Delete()
