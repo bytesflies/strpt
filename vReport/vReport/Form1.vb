@@ -922,11 +922,29 @@ out:
 				ct.Export(tmpName, "GIF")
 				wordDoc.Application.Selection.InlineShapes.AddPicture(tmpName, False, True)
 			Else
-				excelWsTmpl.Shapes().Item(i).Select() '.SelectAll()
-				System.Windows.Forms.Clipboard.Clear()
-				excelWsTmpl.Application.Selection.copy()
-				'wordDoc.Application.Selection.PasteAndFormat(Word.WdRecoveryType.wdChartPicture)
-				wordDoc.Application.Selection.PasteAndFormat(Word.WdRecoveryType.wdFormatOriginalFormatting)
+				Dim retry As Int32
+				Dim suc As Int32
+				suc = 0
+				For retry = 1 To 20
+					Try
+						excelWsTmpl.Shapes().Item(i).Select() '.SelectAll()
+						System.Windows.Forms.Clipboard.Clear()
+						excelWsTmpl.Application.Selection.copy()
+						'wordDoc.Application.Selection.PasteAndFormat(Word.WdRecoveryType.wdChartPicture)
+						wordDoc.Application.Selection.PasteAndFormat(Word.WdRecoveryType.wdFormatOriginalFormatting)
+						suc = 1
+					Catch ex As Exception
+						If retry = 20 Then
+							Throw ex
+						End If
+						logW("重试 " & retry)
+						logW(ex.Message)
+						logW(ex.StackTrace)
+					End Try
+					If suc = 1 Then
+						Exit For
+					End If
+				Next
 			End If
 		Next
 	End Sub
@@ -2197,14 +2215,14 @@ out:
 				图表工作表.Cells(2 + i, 2).Value2 = 获取当前行数据(测项起始列号 + 3 * 测项序号 + 1)
 			Next
 
-			If useClipboard = 0 Then
-				Dim ct As Excel.Chart = 图表工作表.ChartObjects(1).Chart
-				ct.Export(tmpName, "GIF")
-			Else
-				图表工作表.Shapes.SelectAll()
-				System.Windows.Forms.Clipboard.Clear()
-				图表工作表.Application.Selection.copy()
-			End If
+			'If useClipboard = 0 Then
+			'	Dim ct As Excel.Chart = 图表工作表.ChartObjects(1).Chart
+			'	ct.Export(tmpName, "GIF")
+			'Else
+			'	图表工作表.Shapes.SelectAll()
+			'	System.Windows.Forms.Clipboard.Clear()
+			'	图表工作表.Application.Selection.copy()
+			'End If
 		Catch e As Exception
 			logE("生成各指标得分图表:" & e.Message)
 			logE(e.StackTrace)
@@ -2216,11 +2234,36 @@ out:
 		wordDoc.Application.Selection.MoveDown()
 		' 多塞个空行
 		wordDoc.Application.Selection.TypeParagraph()
-		If useClipboard = 0 Then
-			wordDoc.Application.Selection.InlineShapes.AddPicture(tmpName, False, True)
-		Else
-			wordDoc.Application.Selection.PasteAndFormat(Word.WdRecoveryType.wdChartPicture)
-		End If
+
+		Dim retry As Int32
+		Dim suc As Int32
+		suc = 0
+		For retry = 1 To 20
+			Try
+				图表工作表.Activate()
+				If useClipboard = 0 Then
+					Dim ct As Excel.Chart = 图表工作表.ChartObjects(1).Chart
+					ct.Export(tmpName, "GIF")
+					wordDoc.Application.Selection.InlineShapes.AddPicture(tmpName, False, True)
+				Else
+					图表工作表.Shapes.SelectAll()
+					System.Windows.Forms.Clipboard.Clear()
+					图表工作表.Application.Selection.copy()
+					wordDoc.Application.Selection.PasteAndFormat(Word.WdRecoveryType.wdChartPicture)
+				End If
+				suc = 1
+			Catch ex As Exception
+				If retry = 20 Then
+					Throw ex
+				End If
+				logW("重试 " & retry)
+				logW(ex.Message)
+				logW(ex.StackTrace)
+			End Try
+			If suc = 1 Then
+				Exit For
+			End If
+		Next
 
 out:
 		'logI("结束 - 生成各指标得分图表")
