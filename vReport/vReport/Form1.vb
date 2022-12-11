@@ -2544,29 +2544,31 @@ out:
 	End Sub
 
 	' table header
-	Private rptHdrTbl() As String = { _
-	"是否参测", "缺项数量", "ID", "所属区", "姓名", "学校", "学段", "年级", "班级", "性别", _
-	"综合成绩", "综合评定", "测试成绩", "测试成绩评定", "附加分", _
-	"身高成绩", "体重成绩", "身高体重指数", "身高体重成绩", "身高体重等级", _
-	"肺活量成绩", "肺活量得分", "肺活量等级", _
-	"50米跑成绩", "50米跑得分", "50米跑等级", _
-	"坐位体前屈成绩", "坐位体前屈得分", "坐位体前屈等级", _
-	"一分钟跳绳成绩", "一分钟跳绳得分", "一分钟跳绳等级", _
-	"一分钟仰卧起坐成绩", "一分钟仰卧起坐得分", "一分钟仰卧起坐等级", _
-	"50米×8往返跑成绩", "50米×8往返跑得分", "50米×8往返跑等级", _
-	"立定跳远成绩", "立定跳远得分", "立定跳远等级", _
-	"800米跑成绩", "800米跑得分", "800米跑等级", _
-	"1000米跑成绩", "1000米跑得分", "1000米跑等级", _
-	"引体向上成绩", "引体向上得分", "引体向上等级", _
-	"是否有50米跑", "50米跑附加分", _
-	"是否有坐位体前屈", "坐位体前屈附加分", _
-	"是否有一分钟跳绳", "一分钟跳绳附加分", _
-	"是否有一分钟仰卧起坐", "一分钟仰卧起坐附加分", _
-	"是否有50米×8往返跑", "50米×8往返跑附加分", _
-	"是否有立定跳远", "立定跳远附加分", _
-	"是否有800米跑", "800米跑附加分", _
-	"是否有1000米跑", "1000米跑附加分", _
-	"是否有引体向上", "引体向上附加分"}
+	Private rptHdrTbl() As String = {
+	"是否参测", "缺项数量", "ID", "所属区", "姓名", "学校", "学段", "年级", "班级", "性别",
+	"综合成绩", "综合评定", "测试成绩", "测试成绩评定", "附加分",
+	"身高成绩", "体重成绩", "身高体重指数", "身高体重成绩", "身高体重等级",
+	"肺活量成绩", "肺活量得分", "肺活量等级",
+	"50米跑成绩", "50米跑得分", "50米跑等级",
+	"坐位体前屈成绩", "坐位体前屈得分", "坐位体前屈等级",
+	"一分钟跳绳成绩", "一分钟跳绳得分", "一分钟跳绳等级",
+	"一分钟仰卧起坐成绩", "一分钟仰卧起坐得分", "一分钟仰卧起坐等级",
+	"50米×8往返跑成绩", "50米×8往返跑得分", "50米×8往返跑等级",
+	"立定跳远成绩", "立定跳远得分", "立定跳远等级",
+	"800米跑成绩", "800米跑得分", "800米跑等级",
+	"1000米跑成绩", "1000米跑得分", "1000米跑等级",
+	"引体向上成绩", "引体向上得分", "引体向上等级",
+	"是否有50米跑", "50米跑附加分",
+	"是否有坐位体前屈", "坐位体前屈附加分",
+	"是否有一分钟跳绳", "一分钟跳绳附加分",
+	"是否有一分钟仰卧起坐", "一分钟仰卧起坐附加分",
+	"是否有50米×8往返跑", "50米×8往返跑附加分",
+	"是否有立定跳远", "立定跳远附加分",
+	"是否有800米跑", "800米跑附加分",
+	"是否有1000米跑", "1000米跑附加分",
+	"是否有引体向上", "引体向上附加分",
+	"赋分项",
+	"预留1", "预留2", "预留3", "预留4", "预留5", "预留6", "预留7", "预留8"}
 
 	Private gradeNameTbl() As String = { _
 	"一年级", "二年级", "三年级", "四年级", "五年级", "六年级", _
@@ -3065,6 +3067,8 @@ rowComplete:
 		st.totalScore = 0
 		st.totalJfScore = 0
 
+		st.extraScore = 0
+
 		'For i = 0 To UBound(rptHdrTbl)
 		'st.arr(i) = ""
 		'Next
@@ -3282,7 +3286,10 @@ rowComplete:
 			If st.nlpValid = 1 Then calcNlpScore(st)
 		End If
 
-		If st.totalValid = 1 Then calcTotalScore(st)
+		If st.totalValid = 1 Then
+			calcTotalScore(st)
+			calcExtraScore(st)
+		End If
 	End Sub
 
 	Sub createStudentReportHeader(ByRef excelWsDst As Excel.Worksheet)
@@ -3723,6 +3730,11 @@ rowComplete:
 				.arr(col + 1) = "0"
 			End If
 			col += 2
+
+			If st.grade = 3 Or st.grade = 5 Or st.grade = 7 Then
+				.arr(col + 0) = Math.Round(Int((st.extraScore + 5) / 10) / 10, 1)
+				col += 1
+			End If
 
 			If 是否参测 = 0 Then
 				.arr(0) = "否"
@@ -4251,6 +4263,26 @@ found:
 		st.totalJfScore = (st.tsJfScore + st.ywqzJfScore + st.nlpJfScore) * 100
 	End Sub
 
+	Sub calcExtraScore(ByRef st As Student)
+		If st.grade = 3 Or st.grade = 5 Or st.grade = 7 Then
+			Dim finalScore As Long
+			finalScore = st.totalScore + st.totalJfScore
+			If finalScore >= 8000 Then
+				st.extraScore = 1000
+			ElseIf finalScore >= 7500 Then
+				st.extraScore = 850
+			ElseIf finalScore >= 7000 Then
+				st.extraScore = 800
+			ElseIf finalScore >= 6500 Then
+				st.extraScore = 750
+			ElseIf finalScore >= 6000 Then
+				st.extraScore = 700
+			Else
+				st.extraScore = 550
+			End If
+		End If
+	End Sub
+
 	Private Sub 计算成绩ToolStripMenuItem1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles 计算成绩ToolStripMenuItem1.Click
 		点击事件(OpType.StudentScore)
 	End Sub
@@ -4383,6 +4415,8 @@ Public Class Student
 	Public totalScore As Long
 	' 100倍
 	Public totalJfScore As Long
+	' 100倍
+	Public extraScore As Long
 
 	' 存储报表数据
 	Public arr() As Object
