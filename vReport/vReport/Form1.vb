@@ -118,6 +118,8 @@ Public Class Form1
 	Dim 学校统计信息 As Dictionary(Of String, 统计信息) = New Dictionary(Of String, 统计信息)
 	Dim 学校统计信息详细 As Dictionary(Of String, 学校信息详细) = New Dictionary(Of String, 学校信息详细)
 
+	Dim 学段模板 As String
+
 	' 资源信息
 	Dim wkType As Int32
 	Dim wk As Thread
@@ -586,7 +588,7 @@ out:
 		docFullName = docPath & "\" & 区 & "_" & 学校 & ".docx"
 
 		logW("打开报告模板")
-		wordDoc = wordApp.Documents.Add(Application.StartupPath & "\学校报告模板.docx")
+		wordDoc = wordApp.Documents.Add(Application.StartupPath & "\学校报告模板" & 学段模板 & ".docx")
 		logW("保存报告: " & docFullName)
 		wordDoc.SaveAs(docFullName)
 		If displayWord Then wordDoc.Application.Activate()
@@ -631,7 +633,7 @@ out:
 		docFullName = docPath & "\" & 区 & "_" & 学校 & "_" & 年级 & ".docx"
 
 		logW("打开报告模板")
-		wordDoc = wordApp.Documents.Add(Application.StartupPath & "\年级报告模板.docx")
+		wordDoc = wordApp.Documents.Add(Application.StartupPath & "\年级报告模板" & 学段模板 & ".docx")
 		logW("保存报告: " & docFullName)
 		wordDoc.SaveAs(docFullName)
 		If displayWord Then wordDoc.Application.Activate()
@@ -678,7 +680,7 @@ out:
 		docFullName = docPath & "\" & 区 & "_" & 学校 & "_" & 年级 & "_" & 班级 & ".docx"
 
 		logW("打开报告模板")
-		wordDoc = wordApp.Documents.Add(Application.StartupPath & "\班级报告模板.docx")
+		wordDoc = wordApp.Documents.Add(Application.StartupPath & "\班级报告模板" & 学段模板 & ".docx")
 		logW("保存报告: " & docFullName)
 		wordDoc.SaveAs(docFullName)
 		If displayWord Then wordDoc.Application.Activate()
@@ -710,7 +712,7 @@ out:
 		关闭班级报告 = 0
 	End Function
 
-	Private Sub 搜索(ByRef 关键字 As String)
+	Private Function 搜索(ByRef 关键字 As String)
 		Dim wordFind As Word.Find
 		wordFind = wordDoc.Application.Selection.Find
 		wordFind.ClearFormatting()
@@ -725,8 +727,8 @@ out:
 		wordFind.MatchWildcards = False
 		wordFind.MatchSoundsLike = False
 		wordFind.MatchAllWordForms = False
-		wordDoc.Application.Selection.Find.Execute()
-	End Sub
+		搜索 = wordDoc.Application.Selection.Find.Execute()
+	End Function
 
 	Private Function 比较(ByVal x As UInt32, ByVal y As UInt32)
 		If x > y Then
@@ -763,7 +765,10 @@ out:
 			样式 = "测试结果分析文本"
 		End If
 
-		搜索(关键字)
+		Dim 结果 As Boolean = 搜索(关键字)
+		If 结果 = 0 Then
+			Exit Sub
+		End If
 		x(0) = 学校信息.百分比(项目, 3, 0)
 		x(1) = 学区信息.百分比(项目, 3, 0)
 		x(2) = 学校信息.百分比(项目, 3, 3)
@@ -949,11 +954,42 @@ out:
 			End If
 		Next
 	End Sub
+	Private Function 获取学段索引(t As String)
+		Dim i As Int32 = 0
+		If t.Contains("小") Then
+			i = 0
+		ElseIf t.Contains("初") Then
+			i = 1
+		ElseIf t.Contains("高") Then
+			i = 2
+		Else
+			i = 3
+		End If
+		获取学段索引 = i
+	End Function
+
+	Private Function 获取测项索引(t As String)
+		Dim i As Int32 = 0
+		Dim j As Int32 = 学校统计项.Length - 1
+		Dim k As Int32 = -1
+		For i = 0 To j
+			If t.Contains(学校统计项(i).关键字) Then
+				' not a perfect match
+				If 学校统计项(i).关键字 = "A8" And t.Contains("A800") Then Continue For
+				k = i
+				Exit For
+			End If
+		Next
+		获取测项索引 = k
+	End Function
 
 	Private Sub 生成单个学校报告(ByRef 学校名称 As String, ByRef 学校信息 As 统计信息, ByRef 学区信息 As 统计信息)
 		Dim i As Int32
 		Dim j As Int32
 		Dim k As Int32
+		Dim r As Int32
+		Dim c As Int32
+		Dim t As String
 
 		logI("开始 - 打开学校报告")
 		打开学校报告(学校信息.区, 学校名称)
@@ -961,9 +997,8 @@ out:
 
 		' 生成学校名称
 		For i = 1 To wordDoc.Paragraphs.Count
-			Dim content As String
-			content = wordDoc.Paragraphs(i).Range.Text()
-			If content.Contains("学校名称") Then
+			t = wordDoc.Paragraphs(i).Range.Text()
+			If t.Contains("学校名称") Then
 				wordDoc.Paragraphs(i).Range.Text = 学校名称
 				wordDoc.Paragraphs(i).Style = "学校名称"
 				wordDoc.Paragraphs(i).Format.Alignment = Word.WdParagraphAlignment.wdAlignParagraphRight
@@ -973,16 +1008,15 @@ out:
 		logI("结束 - 生成学校名称")
 
 		' 生成表格
-		For i = 1 To wordDoc.Tables.Count
-			Dim val As String
+		For c = 1 To wordDoc.Tables.Count
 			Dim table As Word.Table
 
-			table = wordDoc.Tables(i)
+			table = wordDoc.Tables(c)
 			table.Select()
-			val = table.Cell(1, 1).Range.Text
+			t = table.Cell(1, 1).Range.Text
 
 			'logI("处理表格" & i & "一共" & wordDoc.Tables.Count & "名称" & val)
-			If val.Contains("学校") Then
+			If t.Contains("学校") Then
 				table.Cell(1, 2).Range.Text = 学校名称
 				table.Cell(2, 3).Range.Text = 学校信息.报名人数
 				table.Cell(2, 5).Range.Text = 学校信息.参测人数
@@ -996,64 +1030,41 @@ out:
 				table.Cell(5, 3).Range.Text = 学区信息.加分人数
 				table.Cell(5, 5).Range.Text = 转换完整百分比(学区信息.参测比例)
 				table.Cell(5, 7).Range.Text = 转换完整百分比(学区信息.完测比例)
-			ElseIf val.Contains("综合评定等级") Then
-				For j = 0 To 3
+			ElseIf t.Contains("综合评定等级") Then
+				For r = 2 To table.Rows.Count
+					j = 获取学段索引(table.Cell(r, 3).Range.Text)
 					For k = 0 To 3
-						table.Cell(2 + j * 2, 3 + k).Range.Text = 转换完整百分比(学校信息.百分比(0, j, k))
-						table.Cell(3 + j * 2, 3 + k).Range.Text = 转换完整百分比(学区信息.百分比(0, j, k))
+						table.Cell(r + 0, 3 + k).Range.Text = 转换完整百分比(学校信息.百分比(0, j, k))
+						table.Cell(r + 1, 3 + k).Range.Text = 转换完整百分比(学区信息.百分比(0, j, k))
 					Next
+					r += 1
 				Next
-			ElseIf val.Contains("评价等级") Then
-				Dim t As String
-				Dim g As Int32
-				t = table.Cell(2, 2).Range.Text
-				g = -1
-				If t.Contains("形校小优") Then
-					g = 0
-				ElseIf t.Contains("形校初优") Then
-					g = 1
-				ElseIf t.Contains("形校高优") Then
-					g = 2
-				End If
-				If g >= 0 Then
-					For j = 0 To 3
-						table.Cell(2, 2 + j).Range.Text = 转换完整百分比(学校信息.百分比(1, g, j))
-					Next
-					Dim idx As Int32
-					idx = 4
-					For j = 2 To 11
-						If 学校统计项(j).学段(g) <> 0 Then
-							For k = 0 To 3
-								table.Cell(idx, 2 + k).Range.Text = 转换完整百分比(学校信息.百分比(j, g, k))
-							Next
-							idx += 1
-						End If
-					Next
-				End If
-			ElseIf val.Contains("等级") Then
-				Dim idx As Int32
-				Dim row As Int32
-				Dim t As String
-				idx = 65535
-				t = table.Cell(2, 3).Range.Text
-				For j = 0 To 11
-					If t.Contains(学校统计项(j).关键字) Then
-						' not a perfect match
-						If 学校统计项(j).关键字 = "A8" And t.Contains("A800") Then Continue For
-						idx = j
-						Exit For
+			ElseIf t.Contains("评价等级") Then
+				j = 获取学段索引(table.Cell(2, 3).Range.Text)
+				For k = 0 To 3
+					table.Cell(2, 2 + k).Range.Text = 转换完整百分比(学校信息.百分比(1, j, k))
+				Next
+				For r = 4 To table.Rows.Count
+					i = 获取测项索引(table.Cell(r, 2).Range.Text)
+					If i >= 0 Then
+						For k = 0 To 3
+							table.Cell(r, 2 + k).Range.Text = 转换完整百分比(学校信息.百分比(i, j, k))
+						Next
 					End If
 				Next
-				If idx <= 11 Then
-					row = 0
-					For j = 0 To 3
-						' 第j个学段
-						If 学校统计项(idx).学段(j) <> 0 Then
+			ElseIf t.Contains("等级") Then
+				i = 获取测项索引(table.Cell(2, 3).Range.Text)
+				If i >= 0 Then
+					For r = 2 To table.Rows.Count
+						j = 获取学段索引(table.Cell(r, 3).Range.Text)
+						If 学校统计项(i).学段(j) <> 0 Then
 							For k = 0 To 3
-								table.Cell(2 + row * 2, 3 + k).Range.Text = 转换完整百分比(学校信息.百分比(idx, j, k))
-								table.Cell(3 + row * 2, 3 + k).Range.Text = 转换完整百分比(学区信息.百分比(idx, j, k))
+								table.Cell(r + 0, 3 + k).Range.Text = 转换完整百分比(学校信息.百分比(i, j, k))
+								table.Cell(r + 1, 3 + k).Range.Text = 转换完整百分比(学区信息.百分比(i, j, k))
 							Next
-							row += 1
+							' 本校
+							' 全区
+							r += 1
 						End If
 					Next
 				End If
@@ -1076,8 +1087,11 @@ out:
 
 	Private Sub 生成单个年级报告(ByRef 学校名称 As String, ByVal 年级 As UInt32, ByRef 年级名称 As String, ByRef 学校信息 As 统计信息, ByRef 学区信息 As 统计信息)
 		Dim i As Int32
-		Dim j As Int32
+		'Dim j As Int32
 		Dim k As Int32
+		Dim r As Int32
+		Dim c As Int32
+		Dim t As String
 
 		logI("开始 - 打开年级报告")
 		打开年级报告(学校信息.区, 学校名称, 年级名称)
@@ -1085,9 +1099,8 @@ out:
 
 		' 生成学校名称 年级名称
 		For i = 1 To wordDoc.Paragraphs.Count
-			Dim content As String
-			content = wordDoc.Paragraphs(i).Range.Text()
-			If content.Contains("学校名称") Then
+			t = wordDoc.Paragraphs(i).Range.Text()
+			If t.Contains("学校名称") Then
 				wordDoc.Paragraphs(i).Range.Select()
 				wordDoc.Application.Selection.Delete()
 				wordDoc.Application.Selection.TypeText(学校名称)
@@ -1098,9 +1111,8 @@ out:
 			End If
 		Next
 		For i = 1 To wordDoc.Paragraphs.Count
-			Dim content As String
-			content = wordDoc.Paragraphs(i).Range.Text()
-			If content.Contains("年级名称") Then
+			t = wordDoc.Paragraphs(i).Range.Text()
+			If t.Contains("年级名称") Then
 				wordDoc.Paragraphs(i).Range.Select()
 				wordDoc.Application.Selection.Delete()
 				wordDoc.Application.Selection.TypeText(年级名称)
@@ -1114,16 +1126,15 @@ out:
 		logI("结束 - 生成学校名称年级名称")
 
 		' 生成表格
-		For i = 1 To wordDoc.Tables.Count
-			Dim val As String
+		For c = 1 To wordDoc.Tables.Count
 			Dim table As Word.Table
 
-			table = wordDoc.Tables(i)
+			table = wordDoc.Tables(c)
 			table.Select()
-			val = table.Cell(1, 1).Range.Text
+			t = table.Cell(1, 1).Range.Text
 
 			'logR("处理表格" & i & "一共" & wordDoc.Tables.Count & "名称" & val)
-			If val.Contains("学校") Then
+			If t.Contains("学校") Then
 				table.Cell(1, 2).Range.Text = 学校名称
 				table.Cell(2, 2).Range.Text = 年级名称
 				table.Cell(3, 3).Range.Text = 学校信息.报名人数
@@ -1138,61 +1149,29 @@ out:
 				table.Cell(6, 3).Range.Text = 学区信息.加分人数
 				table.Cell(6, 5).Range.Text = 转换完整百分比(学区信息.参测比例)
 				table.Cell(6, 7).Range.Text = 转换完整百分比(学区信息.完测比例)
-			ElseIf val.Contains("综合评定等级") Then
+			ElseIf t.Contains("综合评定等级") Then
 				' 优良中差
-				For j = 0 To 3
-					table.Cell(2, 2 + j).Range.Text = 转换完整百分比(学校信息.百分比(0, 3, j))
-					table.Cell(3, 2 + j).Range.Text = 转换完整百分比(学区信息.百分比(0, 3, j))
+				For k = 0 To 3
+					table.Cell(2, 2 + k).Range.Text = 转换完整百分比(学校信息.百分比(0, 3, k))
+					table.Cell(3, 2 + k).Range.Text = 转换完整百分比(学区信息.百分比(0, 3, k))
 				Next
-			ElseIf val.Contains("评价等级") Then
-				Dim t As String
-				Dim g As Int32
-				t = table.Cell(2, 2).Range.Text
-				g = -1
-				If t.Contains("形") Then
-					g = 年级
-				End If
-				If g >= 0 Then
-					For j = 0 To 3
-						table.Cell(2, 2 + j).Range.Text = 转换完整百分比(学校信息.百分比(1, 3, j))
-					Next
-					Dim idx As Int32
-					idx = 4
-					For j = 2 To 11
-						'If 学校统计项(j).学段(g) <> 0 Then
-						For k = 0 To 3
-							table.Cell(idx, 2 + k).Range.Text = 转换完整百分比(学校信息.百分比(j, 3, k))
-						Next
-						idx += 1
-						'End If
-					Next
-				End If
-			ElseIf val.Contains("等级") Then
-				Dim idx As Int32
-				'Dim row As Int32
-				Dim t As String
-				idx = 65535
-				t = table.Cell(2, 3).Range.Text
-				For j = 0 To 11
-					If t.Contains(学校统计项(j).关键字) Then
-						' not a perfect match
-						If 学校统计项(j).关键字 = "A8" And t.Contains("A800") Then Continue For
-						idx = j
-						Exit For
-					End If
+			ElseIf t.Contains("评价等级") Then
+				For k = 0 To 3
+					table.Cell(2, 2 + k).Range.Text = 转换完整百分比(学校信息.百分比(1, 3, k))
 				Next
-				If idx <= 11 Then
-					'row = 0
-					'For j = 0 To 3
-					' 第j个学段
-					'If 学校统计项(idx).学段(j) <> 0 Then
+				For r = 4 To table.Rows.Count
+					i = 获取测项索引(table.Cell(r, 2).Range.Text)
 					For k = 0 To 3
-						table.Cell(2, 2 + k).Range.Text = 转换完整百分比(学校信息.百分比(idx, 3, k))
-						table.Cell(3, 2 + k).Range.Text = 转换完整百分比(学区信息.百分比(idx, 3, k))
+						table.Cell(r, 2 + k).Range.Text = 转换完整百分比(学校信息.百分比(i, 3, k))
 					Next
-					'row += 1
-					'End If
-					'Next
+				Next
+			ElseIf t.Contains("等级") Then
+				i = 获取测项索引(table.Cell(2, 3).Range.Text)
+				If i >= 0 Then
+					For k = 0 To 3
+						table.Cell(2, 2 + k).Range.Text = 转换完整百分比(学校信息.百分比(i, 3, k))
+						table.Cell(3, 2 + k).Range.Text = 转换完整百分比(学区信息.百分比(i, 3, k))
+					Next
 				End If
 			End If
 		Next
@@ -1213,8 +1192,11 @@ out:
 
 	Private Sub 生成单个班级报告(ByRef 学校名称 As String, ByRef 年级名称 As String, ByRef 班级名称 As String, ByRef 学校信息 As 统计信息, ByRef 学区信息 As 统计信息)
 		Dim i As Int32
-		Dim j As Int32
+		'Dim j As Int32
 		Dim k As Int32
+		Dim r As Int32
+		Dim c As Int32
+		Dim t As String
 
 		logI("开始 - 打开班级报告")
 		打开班级报告(学校信息.区, 学校名称, 年级名称, 班级名称)
@@ -1225,9 +1207,8 @@ out:
 
 		' 生成学校名称 年级名称
 		For i = 1 To wordDoc.Paragraphs.Count
-			Dim content As String
-			content = wordDoc.Paragraphs(i).Range.Text()
-			If content.Contains("学校名称") Then
+			t = wordDoc.Paragraphs(i).Range.Text()
+			If t.Contains("学校名称") Then
 				wordDoc.Paragraphs(i).Range.Select()
 				wordDoc.Application.Selection.Delete()
 				wordDoc.Application.Selection.TypeText(学校名称)
@@ -1238,9 +1219,8 @@ out:
 			End If
 		Next
 		For i = 1 To wordDoc.Paragraphs.Count
-			Dim content As String
-			content = wordDoc.Paragraphs(i).Range.Text()
-			If content.Contains("年级名称") Then
+			t = wordDoc.Paragraphs(i).Range.Text()
+			If t.Contains("年级名称") Then
 				wordDoc.Paragraphs(i).Range.Select()
 				wordDoc.Application.Selection.Delete()
 				wordDoc.Application.Selection.TypeText(年级名称)
@@ -1252,9 +1232,8 @@ out:
 			End If
 		Next
 		For i = 1 To wordDoc.Paragraphs.Count
-			Dim content As String
-			content = wordDoc.Paragraphs(i).Range.Text()
-			If content.Contains("班级名称") Then
+			t = wordDoc.Paragraphs(i).Range.Text()
+			If t.Contains("班级名称") Then
 				wordDoc.Paragraphs(i).Range.Select()
 				wordDoc.Application.Selection.Delete()
 				wordDoc.Application.Selection.TypeText(班级名称)
@@ -1268,16 +1247,15 @@ out:
 		logI("结束 - 生成学校名称年级名称")
 
 		' 生成表格
-		For i = 1 To wordDoc.Tables.Count
-			Dim val As String
+		For c = 1 To wordDoc.Tables.Count
 			Dim table As Word.Table
 
-			table = wordDoc.Tables(i)
+			table = wordDoc.Tables(c)
 			table.Select()
-			val = table.Cell(1, 1).Range.Text
+			t = table.Cell(1, 1).Range.Text
 
 			'logR("处理表格" & i & "一共" & wordDoc.Tables.Count & "名称" & val)
-			If val.Contains("学校") Then
+			If t.Contains("学校") Then
 				table.Cell(1, 2).Range.Text = 学校名称
 				table.Cell(2, 2).Range.Text = 年级名称
 				table.Cell(3, 2).Range.Text = 班级名称
@@ -1293,61 +1271,29 @@ out:
 				table.Cell(7, 3).Range.Text = 学区信息.加分人数
 				table.Cell(7, 5).Range.Text = 转换完整百分比(学区信息.参测比例)
 				table.Cell(7, 7).Range.Text = 转换完整百分比(学区信息.完测比例)
-			ElseIf val.Contains("综合评定等级") Then
+			ElseIf t.Contains("综合评定等级") Then
 				' 优良中差
-				For j = 0 To 3
-					table.Cell(2, 2 + j).Range.Text = 转换完整百分比(学校信息.百分比(0, 3, j))
-					table.Cell(3, 2 + j).Range.Text = 转换完整百分比(学区信息.百分比(0, 3, j))
+				For k = 0 To 3
+					table.Cell(2, 2 + k).Range.Text = 转换完整百分比(学校信息.百分比(0, 3, k))
+					table.Cell(3, 2 + k).Range.Text = 转换完整百分比(学区信息.百分比(0, 3, k))
 				Next
-			ElseIf val.Contains("评价等级") Then
-				Dim t As String
-				'Dim g As Int32
-				t = table.Cell(2, 2).Range.Text
-				'g = -1
-				'If t.Contains("形") Then
-				'	g = 年级
-				'End If
-				'If g >= 0 Then
-				For j = 0 To 3
-					table.Cell(2, 2 + j).Range.Text = 转换完整百分比(学校信息.百分比(1, 3, j))
+			ElseIf t.Contains("评价等级") Then
+				For k = 0 To 3
+					table.Cell(2, 2 + k).Range.Text = 转换完整百分比(学校信息.百分比(1, 3, k))
 				Next
-				Dim idx As Int32
-				idx = 4
-				For j = 2 To 11
-					'If 学校统计项(j).学段(g) <> 0 Then
+				For r = 4 To table.Rows.Count
+					i = 获取测项索引(table.Cell(r, 2).Range.Text)
 					For k = 0 To 3
-						table.Cell(idx, 2 + k).Range.Text = 转换完整百分比(学校信息.百分比(j, 3, k))
+						table.Cell(r, 2 + k).Range.Text = 转换完整百分比(学校信息.百分比(i, 3, k))
 					Next
-					idx += 1
-					'End If
 				Next
-				'End If
-			ElseIf val.Contains("等级") Then
-				Dim idx As Int32
-				'Dim row As Int32
-				Dim t As String
-				idx = 65535
-				t = table.Cell(2, 3).Range.Text
-				For j = 0 To 11
-					If t.Contains(学校统计项(j).关键字) Then
-						' not a perfect match
-						If 学校统计项(j).关键字 = "A8" And t.Contains("A800") Then Continue For
-						idx = j
-						Exit For
-					End If
-				Next
-				If idx <= 11 Then
-					'row = 0
-					'For j = 0 To 3
-					' 第j个学段
-					'If 学校统计项(idx).学段(j) <> 0 Then
+			ElseIf t.Contains("等级") Then
+				i = 获取测项索引(table.Cell(2, 3).Range.Text)
+				If i >= 0 Then
 					For k = 0 To 3
-						table.Cell(2, 2 + k).Range.Text = 转换完整百分比(学校信息.百分比(idx, 3, k))
-						table.Cell(3, 2 + k).Range.Text = 转换完整百分比(学区信息.百分比(idx, 3, k))
+						table.Cell(2, 2 + k).Range.Text = 转换完整百分比(学校信息.百分比(i, 3, k))
+						table.Cell(3, 2 + k).Range.Text = 转换完整百分比(学区信息.百分比(i, 3, k))
 					Next
-					'row += 1
-					'End If
-					'Next
 				End If
 			End If
 		Next
@@ -1382,6 +1328,8 @@ out:
 		生成列信息表格(列重命名2)
 
 		Try
+			Dim s As Int32 = 0
+
 			Do While True
 				移动到下一行()
 				预取数据到缓存(excelWs)
@@ -1416,6 +1364,12 @@ out:
 					End If
 				Next
 
+				If g < 6 Then
+					s = s Xor 1
+				Else
+					s = s Xor 2
+				End If
+
 				If Not 学校统计信息详细.ContainsKey(学校名称) Then 学校统计信息详细(学校名称) = New 学校信息详细()
 				If 学校统计信息详细(学校名称).年级统计信息(g) Is Nothing Then 学校统计信息详细(学校名称).年级统计信息(g) = New 统计信息()
 				处理统计信息(1, 学校统计信息详细(学校名称).年级统计信息(g))
@@ -1430,6 +1384,16 @@ out:
 
 				If wkExiting Then GoTo out
 			Loop
+
+			If s = 1 Then
+				学段模板 = "（小学版）"
+			ElseIf s = 2 Then
+				学段模板 = "（中学版）"
+			Else
+				学段模板 = "（全学段版）"
+			End If
+
+			logR("学段模板:" & 学段模板)
 
 			Dim i As UInt32
 			For i = 0 To 学校统计信息.Count - 1
@@ -1456,8 +1420,8 @@ out:
 								logR("正在处理 " & gradeNameTbl(j))
 								处理学校百分比(学校统计信息详细(学校统计信息.ElementAt(i).Key).年级统计信息(j))
 								生成单个年级报告(学校统计信息.ElementAt(i).Key, j, gradeNameTbl(j), 学校统计信息详细(学校统计信息.ElementAt(i).Key).年级统计信息(j), 学校统计信息.ElementAt(i).Value)
-								logR(String.Format("文件 {0}/{1}，学校 {2}/{3}，年级 {4}/{5}，处理完", 第几个文件, 共几个文件, _
-								 i + 1, 学校统计信息.Count, _
+								logR(String.Format("文件 {0}/{1}，学校 {2}/{3}，年级 {4}/{5}，处理完", 第几个文件, 共几个文件,
+								 i + 1, 学校统计信息.Count,
 								 gc + 1, gt))
 								gc += 1
 							End If
@@ -1483,14 +1447,14 @@ out:
 									logR("正在处理 " & 学校统计信息详细(学校统计信息.ElementAt(i).Key).班级信息详细(j).ElementAt(k).Key)
 									处理学校百分比(学校统计信息详细(学校统计信息.ElementAt(i).Key).班级信息详细(j).ElementAt(k).Value)
 									生成单个班级报告(学校统计信息.ElementAt(i).Key, gradeNameTbl(j), 学校统计信息详细(学校统计信息.ElementAt(i).Key).班级信息详细(j).ElementAt(k).Key, 学校统计信息详细(学校统计信息.ElementAt(i).Key).班级信息详细(j).ElementAt(k).Value, 学校统计信息详细(学校统计信息.ElementAt(i).Key).年级统计信息(j))
-									logR(String.Format("文件 {0}/{1}，学校 {2}/{3}，年级 {4}/{5}，班级 {6}/{7}，处理完", _
-									 第几个文件, 共几个文件, i + 1, 学校统计信息.Count, _
-									 gc + 1, gt, _
+									logR(String.Format("文件 {0}/{1}，学校 {2}/{3}，年级 {4}/{5}，班级 {6}/{7}，处理完",
+									 第几个文件, 共几个文件, i + 1, 学校统计信息.Count,
+									 gc + 1, gt,
 									 k + 1, 学校统计信息详细(学校统计信息.ElementAt(i).Key).班级信息详细(j).Count))
 									If wkExiting Then GoTo out
 								Next
-								logR(String.Format("文件 {0}/{1}，学校 {2}/{3}，年级 {4}/{5}，处理完", 第几个文件, 共几个文件, _
-								 i + 1, 学校统计信息.Count, _
+								logR(String.Format("文件 {0}/{1}，学校 {2}/{3}，年级 {4}/{5}，处理完", 第几个文件, 共几个文件,
+								 i + 1, 学校统计信息.Count,
 								 gc + 1, gt))
 								gc += 1
 							End If
@@ -1661,7 +1625,6 @@ out:
 			End If
 
 			Try
-
 				' Entry
 				生成学校报告(生成何种数据, 共几个文件, 第几个文件, 待处理文件, excelWs)
 			Catch e As Exception
