@@ -22,35 +22,35 @@ Partial Class Form1
     '不要使用代码编辑器修改它。
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
-		Me.components = New System.ComponentModel.Container
-		Me.RichTextBox1 = New System.Windows.Forms.RichTextBox
+		Me.components = New System.ComponentModel.Container()
+		Me.RichTextBox1 = New System.Windows.Forms.RichTextBox()
 		Me.报告 = New System.Windows.Forms.ContextMenuStrip(Me.components)
-		Me.学校 = New System.Windows.Forms.ToolStripMenuItem
-		Me.年级ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem
-		Me.班级报告ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem
-		Me.MenuStrip1 = New System.Windows.Forms.MenuStrip
-		Me.数据处理ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem
-		Me.计算成绩ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem
-		Me.区百分比ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem
-		Me.计算成绩ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem
-		Me.学生报告ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem
-		Me.停止处理ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem
-		Me.停止处理ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem
-		Me.清空日志ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem
-		Me.清空状态ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem
-		Me.StatusStrip1 = New System.Windows.Forms.StatusStrip
-		Me.ToolStripStatusLabel1 = New System.Windows.Forms.ToolStripStatusLabel
+		Me.学校 = New System.Windows.Forms.ToolStripMenuItem()
+		Me.年级ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+		Me.班级报告ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+		Me.MenuStrip1 = New System.Windows.Forms.MenuStrip()
+		Me.数据处理ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+		Me.计算成绩ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem()
+		Me.ToolStripSeparator3 = New System.Windows.Forms.ToolStripSeparator()
+		Me.区百分比ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem()
+		Me.计算成绩ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+		Me.学生报告ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+		Me.ToolStripSeparator1 = New System.Windows.Forms.ToolStripSeparator()
+		Me.分类报告ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+		Me.学校报告ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem()
+		Me.年级报告ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem()
+		Me.班级报告ToolStripMenuItem2 = New System.Windows.Forms.ToolStripMenuItem()
+		Me.全部报告ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+		Me.停止处理ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+		Me.停止处理ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem()
+		Me.ToolStripSeparator2 = New System.Windows.Forms.ToolStripSeparator()
+		Me.清空日志ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem()
+		Me.清空状态ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem()
+		Me.StatusStrip1 = New System.Windows.Forms.StatusStrip()
+		Me.ToolStripStatusLabel1 = New System.Windows.Forms.ToolStripStatusLabel()
 		Me.ContextMenuStrip1 = New System.Windows.Forms.ContextMenuStrip(Me.components)
-		Me.清空日志ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem
-		Me.清空状态ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem
-		Me.ToolStripSeparator1 = New System.Windows.Forms.ToolStripSeparator
-		Me.ToolStripSeparator2 = New System.Windows.Forms.ToolStripSeparator
-		Me.ToolStripSeparator3 = New System.Windows.Forms.ToolStripSeparator
-		Me.全部报告ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem
-		Me.分类报告ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem
-		Me.学校报告ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem
-		Me.年级报告ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem
-		Me.班级报告ToolStripMenuItem2 = New System.Windows.Forms.ToolStripMenuItem
+		Me.清空日志ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+		Me.清空状态ToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
 		Me.报告.SuspendLayout()
 		Me.MenuStrip1.SuspendLayout()
 		Me.StatusStrip1.SuspendLayout()
@@ -60,8 +60,8 @@ Partial Class Form1
 		'RichTextBox1
 		'
 		Me.RichTextBox1.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
-					Or System.Windows.Forms.AnchorStyles.Left) _
-					Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+			Or System.Windows.Forms.AnchorStyles.Left) _
+			Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
 		Me.RichTextBox1.BackColor = System.Drawing.SystemColors.Control
 		Me.RichTextBox1.Cursor = System.Windows.Forms.Cursors.IBeam
 		Me.RichTextBox1.Location = New System.Drawing.Point(0, 28)
@@ -117,13 +117,18 @@ Partial Class Form1
 		'计算成绩ToolStripMenuItem1
 		'
 		Me.计算成绩ToolStripMenuItem1.Name = "计算成绩ToolStripMenuItem1"
-		Me.计算成绩ToolStripMenuItem1.Size = New System.Drawing.Size(152, 22)
+		Me.计算成绩ToolStripMenuItem1.Size = New System.Drawing.Size(180, 22)
 		Me.计算成绩ToolStripMenuItem1.Text = "计算成绩"
+		'
+		'ToolStripSeparator3
+		'
+		Me.ToolStripSeparator3.Name = "ToolStripSeparator3"
+		Me.ToolStripSeparator3.Size = New System.Drawing.Size(177, 6)
 		'
 		'区百分比ToolStripMenuItem1
 		'
 		Me.区百分比ToolStripMenuItem1.Name = "区百分比ToolStripMenuItem1"
-		Me.区百分比ToolStripMenuItem1.Size = New System.Drawing.Size(152, 22)
+		Me.区百分比ToolStripMenuItem1.Size = New System.Drawing.Size(180, 22)
 		Me.区百分比ToolStripMenuItem1.Text = "区百分比"
 		'
 		'计算成绩ToolStripMenuItem
@@ -136,8 +141,44 @@ Partial Class Form1
 		'学生报告ToolStripMenuItem
 		'
 		Me.学生报告ToolStripMenuItem.Name = "学生报告ToolStripMenuItem"
-		Me.学生报告ToolStripMenuItem.Size = New System.Drawing.Size(152, 22)
+		Me.学生报告ToolStripMenuItem.Size = New System.Drawing.Size(124, 22)
 		Me.学生报告ToolStripMenuItem.Text = "学生报告"
+		'
+		'ToolStripSeparator1
+		'
+		Me.ToolStripSeparator1.Name = "ToolStripSeparator1"
+		Me.ToolStripSeparator1.Size = New System.Drawing.Size(121, 6)
+		'
+		'分类报告ToolStripMenuItem
+		'
+		Me.分类报告ToolStripMenuItem.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.学校报告ToolStripMenuItem1, Me.年级报告ToolStripMenuItem1, Me.班级报告ToolStripMenuItem2})
+		Me.分类报告ToolStripMenuItem.Name = "分类报告ToolStripMenuItem"
+		Me.分类报告ToolStripMenuItem.Size = New System.Drawing.Size(124, 22)
+		Me.分类报告ToolStripMenuItem.Text = "分类报告"
+		'
+		'学校报告ToolStripMenuItem1
+		'
+		Me.学校报告ToolStripMenuItem1.Name = "学校报告ToolStripMenuItem1"
+		Me.学校报告ToolStripMenuItem1.Size = New System.Drawing.Size(124, 22)
+		Me.学校报告ToolStripMenuItem1.Text = "学校报告"
+		'
+		'年级报告ToolStripMenuItem1
+		'
+		Me.年级报告ToolStripMenuItem1.Name = "年级报告ToolStripMenuItem1"
+		Me.年级报告ToolStripMenuItem1.Size = New System.Drawing.Size(124, 22)
+		Me.年级报告ToolStripMenuItem1.Text = "年级报告"
+		'
+		'班级报告ToolStripMenuItem2
+		'
+		Me.班级报告ToolStripMenuItem2.Name = "班级报告ToolStripMenuItem2"
+		Me.班级报告ToolStripMenuItem2.Size = New System.Drawing.Size(124, 22)
+		Me.班级报告ToolStripMenuItem2.Text = "班级报告"
+		'
+		'全部报告ToolStripMenuItem
+		'
+		Me.全部报告ToolStripMenuItem.Name = "全部报告ToolStripMenuItem"
+		Me.全部报告ToolStripMenuItem.Size = New System.Drawing.Size(124, 22)
+		Me.全部报告ToolStripMenuItem.Text = "全部报告"
 		'
 		'停止处理ToolStripMenuItem
 		'
@@ -149,19 +190,24 @@ Partial Class Form1
 		'停止处理ToolStripMenuItem1
 		'
 		Me.停止处理ToolStripMenuItem1.Name = "停止处理ToolStripMenuItem1"
-		Me.停止处理ToolStripMenuItem1.Size = New System.Drawing.Size(152, 22)
+		Me.停止处理ToolStripMenuItem1.Size = New System.Drawing.Size(180, 22)
 		Me.停止处理ToolStripMenuItem1.Text = "停止处理"
+		'
+		'ToolStripSeparator2
+		'
+		Me.ToolStripSeparator2.Name = "ToolStripSeparator2"
+		Me.ToolStripSeparator2.Size = New System.Drawing.Size(177, 6)
 		'
 		'清空日志ToolStripMenuItem1
 		'
 		Me.清空日志ToolStripMenuItem1.Name = "清空日志ToolStripMenuItem1"
-		Me.清空日志ToolStripMenuItem1.Size = New System.Drawing.Size(152, 22)
+		Me.清空日志ToolStripMenuItem1.Size = New System.Drawing.Size(180, 22)
 		Me.清空日志ToolStripMenuItem1.Text = "清空日志"
 		'
 		'清空状态ToolStripMenuItem1
 		'
 		Me.清空状态ToolStripMenuItem1.Name = "清空状态ToolStripMenuItem1"
-		Me.清空状态ToolStripMenuItem1.Size = New System.Drawing.Size(152, 22)
+		Me.清空状态ToolStripMenuItem1.Size = New System.Drawing.Size(180, 22)
 		Me.清空状态ToolStripMenuItem1.Text = "清空状态"
 		'
 		'StatusStrip1
@@ -197,52 +243,6 @@ Partial Class Form1
 		Me.清空状态ToolStripMenuItem.Name = "清空状态ToolStripMenuItem"
 		Me.清空状态ToolStripMenuItem.Size = New System.Drawing.Size(124, 22)
 		Me.清空状态ToolStripMenuItem.Text = "清空状态"
-		'
-		'ToolStripSeparator1
-		'
-		Me.ToolStripSeparator1.Name = "ToolStripSeparator1"
-		Me.ToolStripSeparator1.Size = New System.Drawing.Size(149, 6)
-		'
-		'ToolStripSeparator2
-		'
-		Me.ToolStripSeparator2.Name = "ToolStripSeparator2"
-		Me.ToolStripSeparator2.Size = New System.Drawing.Size(149, 6)
-		'
-		'ToolStripSeparator3
-		'
-		Me.ToolStripSeparator3.Name = "ToolStripSeparator3"
-		Me.ToolStripSeparator3.Size = New System.Drawing.Size(149, 6)
-		'
-		'全部报告ToolStripMenuItem
-		'
-		Me.全部报告ToolStripMenuItem.Name = "全部报告ToolStripMenuItem"
-		Me.全部报告ToolStripMenuItem.Size = New System.Drawing.Size(152, 22)
-		Me.全部报告ToolStripMenuItem.Text = "全部报告"
-		'
-		'分类报告ToolStripMenuItem
-		'
-		Me.分类报告ToolStripMenuItem.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.学校报告ToolStripMenuItem1, Me.年级报告ToolStripMenuItem1, Me.班级报告ToolStripMenuItem2})
-		Me.分类报告ToolStripMenuItem.Name = "分类报告ToolStripMenuItem"
-		Me.分类报告ToolStripMenuItem.Size = New System.Drawing.Size(152, 22)
-		Me.分类报告ToolStripMenuItem.Text = "分类报告"
-		'
-		'学校报告ToolStripMenuItem1
-		'
-		Me.学校报告ToolStripMenuItem1.Name = "学校报告ToolStripMenuItem1"
-		Me.学校报告ToolStripMenuItem1.Size = New System.Drawing.Size(152, 22)
-		Me.学校报告ToolStripMenuItem1.Text = "学校报告"
-		'
-		'年级报告ToolStripMenuItem1
-		'
-		Me.年级报告ToolStripMenuItem1.Name = "年级报告ToolStripMenuItem1"
-		Me.年级报告ToolStripMenuItem1.Size = New System.Drawing.Size(152, 22)
-		Me.年级报告ToolStripMenuItem1.Text = "年级报告"
-		'
-		'班级报告ToolStripMenuItem2
-		'
-		Me.班级报告ToolStripMenuItem2.Name = "班级报告ToolStripMenuItem2"
-		Me.班级报告ToolStripMenuItem2.Size = New System.Drawing.Size(152, 22)
-		Me.班级报告ToolStripMenuItem2.Text = "班级报告"
 		'
 		'Form1
 		'

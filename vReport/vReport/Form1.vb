@@ -302,6 +302,7 @@ retry:
 		ts = Now
 		logger = New StreamWriter(String.Format("log_{0}{1,2:d2}{2,2:d2}{3,2:d2}{4,2:d2}{5,2:d2}.txt", ts.Year, ts.Month, ts.Day, ts.Hour, ts.Minute, ts.Second), True)
 		logW("程序启动")
+		logR(String.Format("生成时间: {0}", System.IO.File.GetLastWriteTime(Me.GetType().Assembly.Location)))
 
 		' 装载应用()
 	End Sub
@@ -4267,15 +4268,15 @@ found:
 		If st.grade = 3 Or st.grade = 5 Or st.grade = 7 Then
 			Dim finalScore As Long
 			finalScore = st.totalScore + st.totalJfScore
-			If finalScore >= 8000 Then
+			If finalScore >= 7995 Then
 				st.extraScore = 1000
-			ElseIf finalScore >= 7500 Then
+			ElseIf finalScore >= 7495 Then
 				st.extraScore = 850
-			ElseIf finalScore >= 7000 Then
+			ElseIf finalScore >= 6995 Then
 				st.extraScore = 800
-			ElseIf finalScore >= 6500 Then
+			ElseIf finalScore >= 6495 Then
 				st.extraScore = 750
-			ElseIf finalScore >= 6000 Then
+			ElseIf finalScore >= 5995 Then
 				st.extraScore = 700
 			Else
 				st.extraScore = 550
