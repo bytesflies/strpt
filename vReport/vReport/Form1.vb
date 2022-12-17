@@ -1365,9 +1365,9 @@ out:
 				Next
 
 				If g < 6 Then
-					s = s Xor 1
+					s = s Or 1
 				Else
-					s = s Xor 2
+					s = s Or 2
 				End If
 
 				If Not 学校统计信息详细.ContainsKey(学校名称) Then 学校统计信息详细(学校名称) = New 学校信息详细()
