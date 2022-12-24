@@ -117,6 +117,7 @@ Public Class Form1
 	Dim 全区统计信息 As 统计信息 = New 统计信息()
 	Dim 学校统计信息 As Dictionary(Of String, 统计信息) = New Dictionary(Of String, 统计信息)
 	Dim 学校统计信息详细 As Dictionary(Of String, 学校信息详细) = New Dictionary(Of String, 学校信息详细)
+	Dim schoolTemplateMap As New Dictionary(Of String, UInteger)
 
 	Dim 学段模板 As String
 
@@ -1312,6 +1313,23 @@ out:
 		logI("结束 - 关闭班级报告")
 	End Sub
 
+	Private Sub SelectSchoolTemplate(ByRef school As String)
+		Dim s As UInt32 = 0
+
+		If schoolTemplateMap.ContainsKey(school) Then
+			s = schoolTemplateMap(school)
+		End If
+		If s = 1 Then
+			学段模板 = "（小学版）"
+		ElseIf s = 2 Then
+			学段模板 = "（中学版）"
+		Else
+			学段模板 = "（全学段版）"
+		End If
+
+		logR("学校名称:" & school & " 学段模板:" & 学段模板)
+	End Sub
+
 	Private Sub 生成学校报告(ByVal 生成何种数据 As UInt32, ByVal 共几个文件 As UInt32, ByVal 第几个文件 As UInt32, ByRef 待处理文件 As String, ByRef excelWs As Excel.Worksheet)
 		' 处理Excel，生成报表
 		Dim 默认目录 As String
@@ -1320,6 +1338,7 @@ out:
 		全区统计信息 = New 统计信息()
 		学校统计信息.Clear()
 		学校统计信息详细.Clear()
+		schoolTemplateMap.Clear()
 
 		列名转列号表.Clear()
 		当前行号 = 1
@@ -1364,10 +1383,14 @@ out:
 					End If
 				Next
 
+				If Not schoolTemplateMap.ContainsKey(学校名称) Then
+					schoolTemplateMap.Add(学校名称, 0)
+				End If
+
 				If g < 6 Then
-					s = s Or 1
+					schoolTemplateMap(学校名称) = schoolTemplateMap(学校名称) Or 1
 				Else
-					s = s Or 2
+					schoolTemplateMap(学校名称) = schoolTemplateMap(学校名称) Or 2
 				End If
 
 				If Not 学校统计信息详细.ContainsKey(学校名称) Then 学校统计信息详细(学校名称) = New 学校信息详细()
@@ -1385,16 +1408,6 @@ out:
 				If wkExiting Then GoTo out
 			Loop
 
-			If s = 1 Then
-				学段模板 = "（小学版）"
-			ElseIf s = 2 Then
-				学段模板 = "（中学版）"
-			Else
-				学段模板 = "（全学段版）"
-			End If
-
-			logR("学段模板:" & 学段模板)
-
 			Dim i As UInt32
 			For i = 0 To 学校统计信息.Count - 1
 				logR(String.Format("文件 {0}/{1}，学校 {2}/{3}，进行中 ...", 第几个文件, 共几个文件, i + 1, 学校统计信息.Count))
@@ -1402,6 +1415,7 @@ out:
 				If 生成何种数据 = OpType.SchoolReport Then
 					处理学校百分比(全区统计信息)
 					处理学校百分比(学校统计信息.ElementAt(i).Value)
+					SelectSchoolTemplate(学校统计信息.ElementAt(i).Key)
 					生成单个学校报告(学校统计信息.ElementAt(i).Key, 学校统计信息.ElementAt(i).Value, 全区统计信息)
 					If wkExiting Then GoTo out
 				ElseIf 生成何种数据 = OpType.GradeReport Then
@@ -1415,6 +1429,7 @@ out:
 								gt += 1
 							End If
 						Next
+						SelectSchoolTemplate(学校统计信息.ElementAt(i).Key)
 						For j = 0 To 学校统计信息详细(学校统计信息.ElementAt(i).Key).年级统计信息.Count - 1
 							If Not 学校统计信息详细(学校统计信息.ElementAt(i).Key).年级统计信息(j) Is Nothing Then
 								logR("正在处理 " & gradeNameTbl(j))
@@ -1438,6 +1453,7 @@ out:
 								gt += 1
 							End If
 						Next
+						SelectSchoolTemplate(学校统计信息.ElementAt(i).Key)
 						For j = 0 To 学校统计信息详细(学校统计信息.ElementAt(i).Key).年级统计信息.Count - 1
 							If Not 学校统计信息详细(学校统计信息.ElementAt(i).Key).年级统计信息(j) Is Nothing Then
 								logR("正在处理 " & gradeNameTbl(j))
