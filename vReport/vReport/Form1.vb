@@ -1975,7 +1975,7 @@ out:
 			If Not Directory.Exists(docPath) Then Directory.CreateDirectory(docPath)
 		End If
 		docFullName = docPath & "\" _
-		 & 获取当前行数据("学校") & "_" & 获取当前行数据("年级") & "_" & 获取当前行数据("班级") & "_" & 获取当前行数据("ID") & ".docx"
+		 & 获取当前行数据("学校") & "_" & 获取当前行数据("年级") & "_" & 获取当前行数据("班级") & "_" & 获取当前行数据("ID") & "_" & 获取当前行数据("姓名") & ".docx"
 
 		logW("打开报告模板")
 		wordDoc = wordApp.Documents.Add(Application.StartupPath & "\Tmpl.docx")
@@ -1997,7 +1997,7 @@ out:
 				Dim docPath As String
 				docPath = Application.StartupPath & "\" & 获取当前行数据("学校") & "\" & 获取当前行数据("年级") & "\" & 获取当前行数据("班级")
 				docFullName = docPath & "\" _
-				 & 获取当前行数据("学校") & "_" & 获取当前行数据("年级") & "_" & 获取当前行数据("班级") & "_" & 获取当前行数据("ID") & ".pdf"
+				 & 获取当前行数据("学校") & "_" & 获取当前行数据("年级") & "_" & 获取当前行数据("班级") & "_" & 获取当前行数据("ID") & "_" & 获取当前行数据("姓名") & ".pdf"
 
 				wordDoc.SaveAs(docFullName, Word.WdSaveFormat.wdFormatPDF)
 			Catch
